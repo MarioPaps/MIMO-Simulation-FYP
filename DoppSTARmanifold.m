@@ -14,8 +14,8 @@ function[hikj]= DoppSTARmanifold(DOA,l_ik,uk,J,Fj,array,userpn)
     Sikj=computeManifoldRx(DOA,0,array,Fc,Fj,lightvel,"hwl");
 
     diff= 2*pi*Fj*(del-l_ik)*Ts;
-    diff_pad=[diff'; zeros(Nc*Nsc,1)];
-    temp= exp(1i*diff_pad);
+    diff=diff';
+    temp=[exp(1i*diff);zeros(Nc*Nsc,1)];
     aj_lik= constprod .* temp;
 
     Fscalar=-(1/lightvel)*(Fc+Fj)*uk;

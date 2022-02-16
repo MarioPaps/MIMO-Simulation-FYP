@@ -1,5 +1,5 @@
 %this function finds the noise subspace from a given Rxx
-function[Pn]= findPn(Rxx,M)
+function[Pn, Evals]= findPn(Rxx,M)
     [Evecs,Evals]= eig(Rxx);
     Evals= abs(Evals);
     [ds,idx]=sort(diag(Evals),'descend');

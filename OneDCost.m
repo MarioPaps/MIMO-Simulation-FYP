@@ -1,4 +1,4 @@
-function[var]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
+function[cost]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
      
       ratio=zeros(Nsc,1);  
       cost=zeros(1,360);
@@ -13,5 +13,5 @@ function[var]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
                 cost(theta)=abs( sum(ratio)/Nsc );
           end
       end
-      var=cost;
+    
 end

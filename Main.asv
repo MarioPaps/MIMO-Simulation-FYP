@@ -1,6 +1,6 @@
 addpath('.\Utilities\');
 %Define constants
-NoSymbs=200;
+NoSymbs=1000;
 M=5; %# users
 N_bar=16;
 N=9;
@@ -12,16 +12,17 @@ Tcs=Nc*Tc;
 Fc=20e9;
 K=3; %3 paths per user
 light_vel=3e8;
+
 Fjvec=((0:Nsc-1)*(1/Tc))';
 %% Generate user and MAI data
 %create 400 bits long bitstream -> 200 channel symbols via QPSK modulation
-load("bitstream.mat");
+%load("bitstream.mat");
 
 radius=sqrt(2);
 phi_rad= 43*(pi/180);
 numsymbs=4;
 symbols= radius*exp(1i*(phi_rad+(0:numsymbs-1)*(pi/2)));
-
+% A= QPSKMod(bitstream(1,:),radius,phi_rad); %desired user's symbols
 MAI= zeros(M-1,NoSymbs);
 MAIsyms=[0.01+0.1i;0.01-0.1i];
 %Generate MAI
@@ -32,7 +33,7 @@ for user=1:M-1
     MAI(user,id1)= MAIsyms(1);
     MAI(user,id2)= MAIsyms(2);
 end
-% bits=DataGen();
+bits=DataGen();
 % filenames=["flamingo.jpg"];
 % originalImage = imread(filenames(1));
 % [rows,cols,~]= size(originalImage);
@@ -41,11 +42,10 @@ end
 %     [bits,~,~]= fImageSource(filenames(ind),200);
 % end
 % bits=[bits;zeros(16,1)];
-A= QPSKMod(bitstream(1,:),radius,phi_rad); %desired user's symbols
+A= QPSKMod(bits,radius,phi_rad); %desired user's symbols
 
 %demultiplexer output for every user
 %The 200 symbols of every user are reshaped into a 5*col matrix
-%the interfering users go through a different channel with BPSK modulation
 a_i1= Demux(A(1,:),M,NoSymbs,Nsc);
 a_i2= Demux(MAI(1,:),M,NoSymbs,Nsc);
 a_i3= Demux(MAI(2,:),M,NoSymbs,Nsc);
@@ -55,11 +55,18 @@ disp('demux out');
 %gold codes
 load("pnseq.mat");
 %% antenna array setup
-[r,r_bar]=TxRxArr();
+rx_bar=[2.56,2.37,1.81,0.98,0,-0.98,-1.81,-2.37,-2.56,-2.37,-1.81,-0.98,0,0.98,1.81,2.37]';
+ry_bar=[0,0.98,1.81,2.37,2.56,2.37,1.81,0.98,0,-0.98,-1.81,-2.37,-2.56,-2.37,-1.81,-0.98]';
+rz_bar=zeros(16,1);
+r_bar=[rx_bar ry_bar rz_bar];
+rx=[1.43 0.90 -0.05 -0.98 -1.45 -1.24 -0.45 0.55 1.29]';
+ry=[0.30 1.15 1.46 1.09 0.20 -0.77 -1.39 -1.36 -0.69]';
+rz=zeros(N,1);
+r=[rx ry rz];
 %% Define channel parameters
 [delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen();
 beta= cell2mat(beta);
-
+f_users=cell(1,M);
 f1j= computef(a_i1,VDops(1,:),Fjvec,Fc,Tcs,light_vel,N_bar);
 f2j= computef(a_i2,VDops(2,:),Fjvec,Fc,Tcs,light_vel,N_bar);
 f3j= computef(a_i3,VDops(3,:),Fjvec,Fc,Tcs,light_vel,N_bar);
@@ -75,9 +82,11 @@ gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
 
 ausers=[a_i1,a_i2,a_i3,a_i4,a_i5];
+
 %% equation 17
 J = [zeros(1,2*Nc*Nsc-1) 0; eye(2*Nc*Nsc-1), zeros(2*Nc*Nsc-1,1)];
-upper=NoSymbs/Nsc;
+n=2;
+upper=40;
 Next= 2*Nc*Nsc;
 x=zeros(2*N*Nc*Nsc,upper);
 H=zeros(M*2*N*Nc*Nsc,K*Nsc);
@@ -163,7 +172,7 @@ end
 %% 
 SNR_abs= 10^(20/10);
 P_Tx= (1/length(bitstream(1,:)))*bitstream(1,:)* bitstream(1,:)';
-%P_Tx= (1/length(bits))*(bits)* (bits)';
+P_Tx= (1/length(bits))*(bits)'* bits;
 Pnoise= abs( P_Tx/SNR_abs);
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x_noisy= x+noise;
@@ -184,7 +193,7 @@ xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 
 %% 1d cost function
 [Pn,lambda_min]= findPn(Rxx_prac,M);
-del_est=[141,111,31];
+del_est=[140,110,30];
 vel_est=[20,66,120];
 [cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
 
@@ -193,22 +202,6 @@ plot(20*log10(cost1d));
 xlabel('DOA(degrees)'); ylabel('Gain(dB)');
 [~,DOAest]=maxk(cost1d,K);
 %% gamma_kj estimation for one path
-k=1;
-[Pcompkjun,hkallj]= gAmpSearch(gamma,Rxx_prac,H,k,M,Nsc,N,Next);
-psi0=phi_rad;
-%% gamma_kj phase estimation for one path
-phase_est=gPhSearch(x_noisy,f,ausers,Pcompkjun,hkallj,psi0,N,Next,Nsc);
-
-
-
-
-
-
-
-
-
-
-
 % %minimum eigenvalue
 % gammanorms= vecnorm(gamma);
 % lambda_min=0;
