@@ -1,10 +1,9 @@
 %objective: compute hikj: 2NNcNsc x 1
 %compute h for a single delay and velocity on a subcarrier and path
-function[hikj]= DoppSTARmanifold(DOA,l_ik,uk,J,Fj,array,userpn)
+function[hikj]= DoppSTARmanifold(DOA,l_ik,uk,J,Fj,Nsc,array,userpn)
     Fc=2e10;
     lightvel=3e8;
     Ts=0.1e-6;
-    Nsc=5;
     Nc=length(userpn);
     del=0:Nc*Nsc-1;
     full_range=(0:1:2*Nc*Nsc-1);
@@ -21,7 +20,7 @@ function[hikj]= DoppSTARmanifold(DOA,l_ik,uk,J,Fj,array,userpn)
     Fscalar=-(1/lightvel)*(Fc+Fj)*uk;
     Fikj= exp(1i*full_range'*2*pi*Fscalar*Ts);
 
-    par= J_raised*aj_lik .* Fikj;
+    par= (J_raised*aj_lik).* Fikj;
     hikj= kron(Sikj,par);
 
 end

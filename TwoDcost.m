@@ -19,12 +19,13 @@ function[cost,del_est,uk_est]= TwoDcost(K,Nc,Nsc,Fjvec,akj,Fkj,Pn,J)
 %                     Fcurr=Fkj(:,uk+1,j);
 %                     prod= J_powers{1,delk+1}*akj.*Fcurr;
 %                     numer=ctranspose(prod)*prod;
-                    
-                    prod=J_powers{1,delk+1}*akj(:,delk+1,j).*Fkj(:,uk+1,j);
+                    position= (j-1)*(uk+1)+uk+1;
+%                     prod=J_powers{1,delk+1}*akj(:,delk+1,j).*Fkj(:,uk+1,j);
+                    prod=J_powers{1,delk+1}*akj(:,delk+1,j).*Fkj(:,position);
                     ratio(j)=(ctranspose(prod)*prod)/ (ctranspose(prod)*Pn*prod);
                     
                 end
-                cost(delk+1,uk+1)= abs((1/Nsc)*sum(ratio));
+                cost(delk+1,uk+1)= (1/Nsc)* abs(sum(ratio));
             end
             disp(delk);
     end

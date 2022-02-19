@@ -1,8 +1,7 @@
 %objective: compute Rxx_theor
-function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,Pnoise)
+function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
     user=1;
     K=3;
-    M=5;
     Next=2*Nc*Nsc;
     Rdes=zeros(N*Next,N*Next);
     Risi=zeros(N*Next,N*Next);
