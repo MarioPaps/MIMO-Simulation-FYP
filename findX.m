@@ -18,7 +18,7 @@ function[x]= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,Pnoise)
                    (gamma(:,(i-1)*Nsc+j).*f((j-1)*K+1: j*K,(i-1)*upper+n+1))* nextsymb];
             elseif(n==upper)
             currsymb= ausers(j,(i-1)*upper+n);
-            prevsymb= ausers(j,(i-1)*upper+n);
+            prevsymb= ausers(j,(i-1)*upper+n-1);
             secondmat=[(gamma(:,(i-1)*Nsc+j).*f((j-1)*K+1: j*K,(i-1)*upper+n))* currsymb;
                      (gamma(:,(i-1)*Nsc+j).*f((j-1)*K+1: j*K,(i-1)*upper+n-1))* prevsymb;
                      zeros(3,1)];

@@ -101,7 +101,7 @@ figure;
 surf(20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 %% 1d cost function
-[Pn,lambda_min]= findPn(Rxx_theor,M);
+[Pn,lambda_min]= findPn(Rxx_prac,M);
 del_est=[14,11,3]; 
 vel_est=[20,66,120];
 [cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
@@ -109,6 +109,8 @@ figure;
 plot(20*log10(cost1d));
 xlabel('DOA(degrees)'); ylabel('Gain(dB)');
 [~,DOAest]=maxk(cost1d,K);
+
+
 
 
 

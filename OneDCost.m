@@ -1,7 +1,7 @@
-function[cost]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
+function[cost1d]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
      
       ratio=zeros(Nsc,1);  
-      cost=zeros(1,360);
+      cost=zeros(K,360);
       for k=1:K
           for theta=1:360
                 for j=1:Nsc
@@ -10,8 +10,9 @@ function[cost]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
                     hj=DoppSTARmanifold(theta,l_ik,uk,J,Fjvec(j),Nsc,array,userpn);
                     ratio(j)= (ctranspose(hj)*hj)/ (ctranspose(hj)*Pn*hj);
                 end
-                cost(theta)= (1/Nsc)* abs( sum(ratio) );
+                cost(k,theta)= (1/Nsc)* abs( sum(ratio) );
           end
       end
-    
+      cost1d= max(cost); %obtain the max along every angle
+      
 end
