@@ -99,16 +99,22 @@ Rxx_res=(1/width(x_res))* (x_res)*ctranspose(x_res);
 [cost2d,del_est,uk_est]= TwoDcost(N,Nc,Nsc,Fjvec,akj,Fkj,Pn_res,J);
 figure;
 surf(20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
-xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
+xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)'); 
+title('Joint Delay-Doppler Velocity Estimation');
 %% 1d cost function
 [Pn,lambda_min]= findPn(Rxx_prac,M);
 del_est=[14,11,3]; 
 vel_est=[20,66,120];
 [cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
+Colours = {'red','g','blue'};
 figure;
-plot(20*log10(cost1d));
-xlabel('DOA(degrees)'); ylabel('Gain(dB)');
-[~,DOAest]=maxk(cost1d,K);
+for k=1:K
+    plot(20*log10(cost1d(k,:)),'Color',Colours{k});
+    hold on;
+end
+xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation');
+[~,DOAest]=maxk(max(cost1d),K);
+hold off;
 
 
 

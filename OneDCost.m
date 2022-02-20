@@ -1,4 +1,4 @@
-function[cost1d]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
+function[cost]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
      
       ratio=zeros(Nsc,1);  
       cost=zeros(K,360);
@@ -13,6 +13,6 @@ function[cost1d]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
                 cost(k,theta)= (1/Nsc)* abs( sum(ratio) );
           end
       end
-      cost1d= max(cost); %obtain the max along every angle
+     
       
 end
