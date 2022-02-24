@@ -9,20 +9,14 @@ function[cost,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays,akj,Fkj,Pn,J)
     for delk=del
         J_powers{delk+1}= J^(delk);
     end
-
     cost=zeros(length(del),length(rad_vel_range));
     ratio=zeros(1,Nsc);
     for delk=del
             for uk=rad_vel_range
                 for j=1:Nsc
-%                     akj= aikj(:,delk+1,j);
-%                     Fcurr=Fkj(:,uk+1,j);
-%                     prod= J_powers{1,delk+1}*akj.*Fcurr;
-%                     numer=ctranspose(prod)*prod;
                     position= (j-1)*(uk)+uk;
                     J_raised= J_powers{delk+1};
 %                     prod=J_powers{1,delk+1}*akj(:,delk+1,j).*Fkj(:,uk+1,j);
-                  %  prod=(J_powers{1,delk+1}*akj(:,delk+1,j)).*Fkj(:,position);
                     prod=(J_raised*akj(:,delk+1,j)).*Fkj(:,position);
                     ratio(j)=(ctranspose(prod)*prod)/ (ctranspose(prod)*Pn*prod);
                     

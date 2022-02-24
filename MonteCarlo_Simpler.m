@@ -115,15 +115,13 @@ for ind=1:length(SNR)
 
     %rmse of radial velocity
     [cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),akj,Fkj,Pn_res,J);
-%     uk_est(3)=118;
     RMSEradvel(1,ind)= findRMSE(VDops(1,:),uk_est);
-%% 
 
 % %     %rmse of doa
-%     [cost1d]=experiment(del_est,uk_est,thetas,Fjvec,r,Pn,J,c(:,1),Nsc,K);
-%     DOAest= findMaxofPath(cost1d);
-%     DOAest= thetas(DOAest);
-%     RMSEDOA(1,ind)= findRMSE(DOAs(1,:),DOAest);
+    [cost1d]=experiment(del_est,uk_est,thetas,Fjvec,r,Pn,J,c(:,1),Nsc,K);
+    DOAest= findMaxofPath(cost1d);
+    DOAest= thetas(DOAest);
+    RMSEDOA(1,ind)= findRMSE(DOAs(1,:),DOAest);
 
     disp(ind);
 end

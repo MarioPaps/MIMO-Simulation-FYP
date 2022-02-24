@@ -1,10 +1,15 @@
 function[power]= twodpower(in)
-    [Nbar,len]=size(in);
-    acc=0;
-    for ind=1:len
-        singlecolpow= (1/Nbar)*ctranspose(in(:,ind))*in(:,ind);
-        acc=acc+singlecolpow;
+    [N,len]=size(in);
+    antennapowers=zeros(N,1);
+    for n=1:N
+        antennapowers(n)= (1/len)*in(n,:)* ctranspose(in(n,:));
     end
-
-    power=acc;
+    power= mean(antennapowers);
+%     acc=0;
+%     for ind=1:len
+%         singlecolpow= (1/Nbar)*ctranspose(in(:,ind))*in(:,ind);
+%         acc=acc+singlecolpow;
+%     end
+% 
+%     power=acc;
 end

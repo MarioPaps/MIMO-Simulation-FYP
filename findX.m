@@ -39,7 +39,6 @@ function[x]= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,Pnoise)
     end
 
         x=sum(product,2);
-        %noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
-%         x=x+noise;
+
         disp(n);
 end

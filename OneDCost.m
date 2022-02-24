@@ -4,7 +4,7 @@ function[cost]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
       cost=[];
       for k=1:K
           count=1;
-          for theta=1:0.1:360
+          for theta=1:360
                 for j=1:Nsc
                     l_ik=del_est(k); %if delay is not zero indexed get rid of 1
                     uk= vel_est(k);
@@ -15,6 +15,7 @@ function[cost]= OneDCost(del_est,vel_est,Fjvec,array,Pn,J,userpn,Nsc,K)
                 count=count+1;
           end
       end
+      cost=abs(cost);
 
       %vectorised version
 %       theta=(1:0.1:360);

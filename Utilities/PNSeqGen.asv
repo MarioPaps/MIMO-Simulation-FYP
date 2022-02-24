@@ -30,9 +30,9 @@ function[c]= PNSeqGen()
     
     c(:,1)= gold_seq(:,positions(1));
     c(:,2)= gold_seq(:,8);
-    c(:,3)= mseq3;      %gold_seq(:,12);
-    c(:,4)= mseq4; % gold_seq(:,20);
-    c(:,5)= mseq5; %gold_seq(:,27);
+    c(:,3)= gold_seq(:,8);
+    c(:,4)= mseq4;
+    c(:,5)= mseq5;
 
 
     disp('check');
