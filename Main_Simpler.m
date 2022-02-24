@@ -1,7 +1,7 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
 %Define constants
-NoSymbs=4000; %or 40
+NoSymbs=2000; %or 40
 M=5; %# users
 N_bar=16;
 N=9;
@@ -38,7 +38,7 @@ ausers=[A,MAI(1,:),MAI(2,:),MAI(3,:),MAI(4,:)];
 [r,r_bar]=TxRxArr(lightvel,Fc);
 %% Channel parameters
 [delays,~,DODs,DOAs,VDops]= Channel_Param_Gen();
-beta=[0.8,0.7,0.9; 0.02 0.04 0.15; 0.21 0.18 0.25; 0.35 0.31 0.3; 0.19 0.02 0.04];
+beta=[0.8*exp(1i*deg2rad(310)),0.7,0.9; 0.02 0.04 0.15; 0.21 0.18 0.25; 0.35 0.31 0.3; 0.19 0.02 0.04];
 beta=beta';
 delays=round(delays/10);
 
@@ -49,11 +49,11 @@ f4j= computef(MAI(3,:),VDops(4,:),Fjvec,Fc,Tcs,lightvel,N_bar);
 f5j= computef(MAI(4,:),VDops(5,:),Fjvec,Fc,Tcs,lightvel,N_bar);
 
 f=[f1j,f2j,f3j,f4j,f5j];
-gamma1= computegamma(beta(:,1),DODs(1,:),Fjvec,r_bar);
-gamma2= computegamma(beta(:,2),DODs(2,:),Fjvec,r_bar);
-gamma3= computegamma(beta(:,3),DODs(3,:),Fjvec,r_bar);
-gamma4= computegamma(beta(:,4),DODs(4,:),Fjvec,r_bar);
-gamma5= computegamma(beta(:,5),DODs(5,:),Fjvec,r_bar);
+gamma1= computegamma(beta(:,1),DODs(1,:),Fjvec,r_bar,K);
+gamma2= computegamma(beta(:,2),DODs(2,:),Fjvec,r_bar,K);
+gamma3= computegamma(beta(:,3),DODs(3,:),Fjvec,r_bar,K);
+gamma4= computegamma(beta(:,4),DODs(4,:),Fjvec,r_bar,K);
+gamma5= computegamma(beta(:,5),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
 
 SNR_abs= 10^(20/10);
@@ -98,13 +98,15 @@ Rxx_res=(1/width(x_res))* (x_res)*ctranspose(x_res);
 %% 2d cost function
 [cost2d,del_est,uk_est]= TwoDcost(N,Nc,Nsc,Fjvec,akj,Fkj,Pn_res,J);
 figure;
-surf(20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
+rv_range=(1:140);
+delay_range=(0:Nc*Nsc-1);
+surf(rv_range,delay_range,20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)'); 
 title('Joint Delay-Doppler Velocity Estimation');
 %% 1d cost function
-[Pn,lambda_min]= findPn(Rxx_prac,M);
+[Pn,lambda_min]= findPn(Rxx_theor,M);
 del_est=[14,11,3]; 
-vel_est=[20,66,120];
+vel_est=[21,67,120];
 [cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
 Colours = {'red','g','blue'};
 figure;
@@ -115,7 +117,24 @@ end
 xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation');
 [~,DOAest]=maxk(max(cost1d),K);
 hold off;
-
+%% gamma_kj ampl. estimation for one path
+k=1;
+evals= eig(Rxx_prac);
+lambda_min= min(evals);
+[Pcompkjun,hkallj]= gAmpSearch(gamma,Rxx_prac,lambda_min,H,k,M,Nsc,N,Next);
+psi0=phi_rad;
+%% gamma_kj phase estimation for one path
+phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,psi0,N,Next,Nsc);
+gammakj_desuser= wrapTo2Pi(angle(gamma(1,1:Nsc)));
+%gammakj_desuser(gammakj_desuser<1)=0;
+display_res= [];
+for iter=1:length(phase_est)
+    display_res(iter,:)=[ gammakj_desuser(iter),phase_est(iter)];
+end
+figure;
+% display_res=[2,2;3,4];
+stem(display_res);
+xlabel('Subcarrier Index'); ylabel('Phase Estimate(rad)');
 
 
 

@@ -1,8 +1,8 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
 %Define constants
-NoSymbs=200;
-M=4; %# users
+NoSymbs=1000;
+M=5; %# users
 N_bar=16;
 N=9;
 Nsc=5;
@@ -42,44 +42,52 @@ end
 %     [bits,~,~]= fImageSource(filenames(ind),200);
 % end
 % bits=[bits;zeros(16,1)];
+bitstream=DataGen(2*NoSymbs);
 A= QPSKMod(bitstream(1,:),radius,phi_rad); %desired user's symbols
 
 %demultiplexer output for every user
 %The 200 symbols of every user are reshaped into a 5*col matrix
 %the interfering users go through a different channel with BPSK modulation
-a_i1= Demux(A(1,:),NoSymbs,Nsc);
-a_i2= Demux(MAI(1,:),NoSymbs,Nsc);
-a_i3= Demux(MAI(2,:),NoSymbs,Nsc);
-a_i4= Demux(MAI(3,:),NoSymbs,Nsc);
+% a_i1= Demux(A(1,:),width(A),Nsc);
+% a_i2= Demux(MAI(1,:),width(A),Nsc);
+% a_i3= Demux(MAI(2,:),width(A),Nsc);
+% a_i4= Demux(MAI(3,:),width(A),Nsc);
+% a_i5= Demux(MAI(4,:),width(A),Nsc);
+a_i1= reshape(A,Nsc,[]);
+a_i2= reshape(MAI(1,:),Nsc,[]);
+a_i3= reshape(MAI(2,:),Nsc,[]);
+a_i4= reshape(MAI(3,:),Nsc,[]);
+a_i5= reshape(MAI(4,:),Nsc,[]);
 
 disp('demux out');
 %gold codes
 c=PNSeqGen();
-%% antenna array setup
-[r,r_bar]=TxRxArr(lightvel,Fc);
 %% Define channel parameters
+[r,r_bar]=TxRxArr(lightvel,Fc);
+
 [delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen();
 
 f1j= computef(a_i1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,N_bar);
 f2j= computef(a_i2,VDops(2,:),Fjvec,Fc,Tcs,lightvel,N_bar);
 f3j= computef(a_i3,VDops(3,:),Fjvec,Fc,Tcs,lightvel,N_bar);
 f4j= computef(a_i4,VDops(4,:),Fjvec,Fc,Tcs,lightvel,N_bar);
-%f5j= computef(a_i5,VDops(5,:),Fjvec,Fc,Tcs,lightvel,N_bar);
+f5j= computef(a_i5,VDops(5,:),Fjvec,Fc,Tcs,lightvel,N_bar);
 
-f=[f1j,f2j,f3j,f4j];
-gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar);
-gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar);
-gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar);
-gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar);
-%gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar);
-gamma=[gamma1, gamma2,gamma3,gamma4];
+f=[f1j,f2j,f3j,f4j,f5j];
+gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
+gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar,K);
+gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
+gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
+gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
+gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
 
-ausers=[a_i1,a_i2,a_i3,a_i4];
+ausers=[a_i1,a_i2,a_i3,a_i4,a_i5];
 SNR_abs= 10^(20/10);
 P_Tx=  (1/length(A))*( A*A');
 P_MAI2= (1/width(MAI))* (MAI(1,:)* MAI(1,:)');
 P_MAI3= (1/width(MAI))* (MAI(2,:)* MAI(2,:)');
 P_MAI4= (1/width(MAI))* (MAI(3,:)* MAI(3,:)');
+P_MAI5= (1/width(MAI))* (MAI(4,:)* MAI(4,:)');
 Pnoise= abs( P_Tx/SNR_abs);
 
 %% H for equation 17
@@ -106,9 +114,10 @@ for n=1:upper
     x(:,n)=store;
 end
 %% eqn 24
+%load("x.mat");
 G= computeG(gamma,K);
 Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise);
-[Pn_theor,~]=findPn(Rxx_theor,1);
+[Pn_theor,~]=findPn(Rxx_theor,M);
 Rxx_prac= (1/width(x))* (x) * (x)';
 %% 2d cost function inputs
 [akj,Fkj]=findvecs(Fjvec,c(:,1),Nc,Nsc,Ts);
@@ -116,20 +125,27 @@ x_res= reshape(x,2*Nc*Nsc,[]);
 Rxx_res=(1/width(x_res))* (x_res)*ctranspose(x_res);
 [Pn_res,~]= findPn(Rxx_res,M);
 %% 2d cost function
-[cost2d,del_est,uk_est]= TwoDcost(N,Nc,Nsc,Fjvec,akj,Fkj,Pn_res,J);
+[cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),akj,Fkj,Pn_res,J);
 figure;
-surf(20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
+rv_range=(1:140);
+delay_range=(0:Nc*Nsc-1);
+surf(rv_range,delay_range,20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 title('Joint Delay-Doppler Velocity Estimation');
 %% 1d cost function
-[Pn,lambda_min]= findPn(Rxx_theor,M);
+[Pn,lambda_min]= findPn(Rxx_prac,M);
 del_est=[141,111,31]; %zero-based indexing
 vel_est=[20,66,120];
-[cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
+[cost1d]=experiment(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
+Colours = {'red','g','blue'};
 figure;
-plot(20*log10(cost1d));
-xlabel('DOA(degrees)'); ylabel('Gain(dB)');  title('DOA Estimation');
-[~,DOAest]=maxk(cost1d,K);
+for k=1:K
+    plot(20*log10(abs(cost1d(k,:))),'Color',Colours{k});
+    hold on;
+end
+xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation');
+DOAest= findMaxofPath(cost1d);
+hold off;
 %% gamma_kj ampl. estimation for one path
 k=1;
 [Pcompkjun,hkallj]= gAmpSearch(gamma,Rxx_prac,H,k,M,Nsc,N,Next);

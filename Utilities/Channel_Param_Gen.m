@@ -68,7 +68,7 @@ function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen()
 
     DODs= zeros(M,K);
     DODs(1,:)= [35 40  60];
-    DODs(2:end,:)=[87 49 67; 110 172 148; 75 83 85; 97 12 87];
+    DODs(2:end,:)=[87 18 137; 110 172 148; 75 83 85; 97 12 81];
    
 
     DOAs= zeros(M,K);

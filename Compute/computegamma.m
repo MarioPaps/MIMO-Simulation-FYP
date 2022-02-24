@@ -1,9 +1,9 @@
 
-function[gammai]= computegamma(beta,DOD,Fjvec,array)
+function[gammai]= computegamma(beta,DOD,Fjvec,array,K)
     Fc=20e9;
     light_vel=3e8;
     Nsc=length(Fjvec);
-    K=length(DOD);
+%     K=length(DOD);
     Nbar=16;
     w_bar= ones(Nbar,1);
     holder=zeros(K,1);
