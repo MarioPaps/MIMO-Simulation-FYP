@@ -12,4 +12,6 @@ function[power]= twodpower(in)
 %     end
 % 
 %     power=acc;
+   % power= sum(sum(abs(in).^2))/ (N*len); this gives the same answer as
+   % the loop
 end

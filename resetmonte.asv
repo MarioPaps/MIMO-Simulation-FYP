@@ -1,9 +1,8 @@
-%constants
 addpath('.\Utilities\');
 addpath('.\Compute\');
 %Define constants
-NoSymbs=200; 
-M=5; %# users
+NoSymbs=1000;
+M=4; %# users
 N_bar=16;
 N=9;
 Nsc=5;
@@ -12,31 +11,25 @@ Ts=0.1e-6;
 Tc=Ts*Nsc;
 Tcs=Nc*Tc; 
 Fc=20e9;
-K=3; %2 paths per user
+K=3; %3 paths per user
 lightvel=3e8;
 Fjvec=((0:Nsc-1)*(1/Tc))';
-%% 5 users - equipowered
-len=2*NoSymbs*Nsc;
-bits= DataGen(len);
+%% Generate user and MAI data
 radius=sqrt(2);
 phi_rad= 43*(pi/180);
-numsymbs=4;
-symbols= radius*exp(1i*(phi_rad+(0:numsymbs-1)*(pi/2)));
-A= QPSKMod(bits,radius,phi_rad); %desired user's symbols
+bits=DataGen(2*NoSymbs);
+A= QPSKMod(bits,radius,phi_rad);
+bitsMAI=DataGen(2*NoSymbs);
 MAI= zeros(M-1,width(A));
-MAIsyms=[0.1+1i;0.1-1i];
-%Generate MAI
-for user=1:M-1
-    id1=randi([1,width(A)/2],1,width(A)/2);
-    id2=randi([(width(A)/2)+1,width(A)],1,width(A)/2);
-    MAI(user,id1)= MAIsyms(1);
-    MAI(user,id2)= MAIsyms(2);
+MAI(1,:)= QPSKMod(bitsMAI,radius,phi_rad);
+
+for user=2:M-1
+    MAI(user,:)=shuffle(MAI(1,:));
 end
 a_i1= Demux(A(1,:),width(A),Nsc);
 a_i2= Demux(MAI(1,:),width(A),Nsc);
 a_i3= Demux(MAI(2,:),width(A),Nsc);
 a_i4= Demux(MAI(3,:),width(A),Nsc);
-a_i5= Demux(MAI(3,:),width(A),Nsc);
 disp('demux out');
 %gold codes
 c=PNSeqGen();
@@ -48,19 +41,25 @@ f1j= computef(a_i1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(a_i2,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
 f3j= computef(a_i3,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
 f4j= computef(a_i4,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
-f5j= computef(a_i5,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 
-f=[f1j,f2j,f3j,f4j,f5j];
+
+f=[f1j,f2j,f3j,f4j];
 gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
 gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar,K);
 gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
 gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
-gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
-gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
+%gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
+gamma=[gamma1, gamma2,gamma3,gamma4];
 
-ausers=[a_i1,a_i2,a_i3,a_i4,a_i5];
+ausers=[a_i1,a_i2,a_i3,a_i4];
+ausers= unitymag(ausers);
+P_Tx=  (1/length(A))*( A*A');
+P_MAI2= (1/width(MAI))* (MAI(1,:)* MAI(1,:)');
+P_MAI3= (1/width(MAI))* (MAI(2,:)* MAI(2,:)');
+P_MAI4= (1/width(MAI))* (MAI(3,:)* MAI(3,:)');
 %% H for equation 17
 J = [zeros(1,2*Nc*Nsc-1) 0; eye(2*Nc*Nsc-1), zeros(2*Nc*Nsc-1,1)];
+L=NoSymbs/Nsc;
 Next= 2*Nc*Nsc;
 H=zeros(M*2*N*Nc*Nsc,K*Nsc);
 for i=1:M
@@ -78,50 +77,38 @@ end
 %% 
 stepsize=0.1;
 thetas=(1:stepsize:360);
-PTx= (1/length(A))*(A*A');
-L=200; %200 snapshots
 SNR=5:5:30; %5-30 dB
 SNR=10.^(SNR/10);
 numtrials=100;
-upper=width(a_i1);
 RMSEradvel=zeros(numtrials,length(SNR));
 RMSEgamma= zeros(numtrials,length(SNR));
 RMSEDOA= zeros(numtrials,length(SNR));
 %% obtain noiseless x
-x=zeros(N*Next,upper);
-for n=1:upper
-       x(:,n)=findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,0.1);
+x=zeros(N*Next,L);
+for n=1:L
+       x(:,n)=findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,L,0.1);
 end
-%% Trial 1 - looping through SNRs
-[akj,Fkj]=findvecs(Fjvec,c(:,1),Nc,Nsc,Ts);
+%% obtain x for every SNR value
+x_noise= cell(1,length(SNR));
 for ind=1:length(SNR)
-    Pnoise=PTx/SNR(ind);
+    Pnoise=P_Tx/SNR(ind);
     noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
-    x_noisy= x+noise;
-    x_res= reshape(x_noisy,2*Nc*Nsc,[]);
-    Rxx_res=(1/width(x_res))* (x_res)*ctranspose(x_res);
-    Rxx_prac= (1/width(x_noisy))* (x_noisy) * (x_noisy)';
-    [Pn,lambda_min]= findPn(Rxx_prac,M);
-    [Pn_res,~]= findPn(Rxx_res,M);
-
-    %rmse of radial velocity
-    [cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),akj,Fkj,Pn_res,J);
-%     uk_est(3)=118;
-    RMSEradvel(1,ind)= findRMSE(VDops(1,:),uk_est);
-%% 
-
-%     %rmse of doa
-    [cost1d]=experiment(del_est,uk_est,thetas,Fjvec,r,Pn,J,c(:,1),Nsc,K);
-    DOAest= findMaxofPath(cost1d);
-    DOAest= thetas(DOAest);
-    RMSEDOA(1,ind)= findRMSE(DOAs(1,:),DOAest);
-
-    disp(ind);
+    x_noise{ind}=x+noise;
 end
+ %% obtain estimates for every SNR
+ uk_est=zeros(length(SNR),K);
+ [akj,Fkj]=findvecs(Fjvec,c(:,1),Nc,Nsc,Ts);
 
-
-%% 
-result= findhVectorised(thetas,141,20,J,Fjvec(1),Nsc,r,c(:,1));
-
-
+ for ind=1:length(SNR)
+    x_res= reshape(x_noise{ind},2*Nc*Nsc,[]);
+    Rxx_res= (1/width(x_res))* (x_res)*ctranspose(x_res);
+    [Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M);
+    [cost2d,del_est,uk_est(ind,:)]= TwoDcost(K,Nc,Nsc,delays(1,:),akj,Fkj,Pn_res,J);
+    findRMSE(VDops(1,:),uk_est(ind,:))
+    
+ end
+ 
+%    [cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),akj,Fkj,Pn_res,J);
+% %     uk_est(3)=118;
+%     RMSEradvel(1,ind)= findRMSE(VDops(1,:),uk_est);
 

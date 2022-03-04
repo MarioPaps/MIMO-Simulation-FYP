@@ -8,7 +8,7 @@ function[x]= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,Pnoise)
             col_start= (j-1)*K+1;
             col_end= j*K;
             Hij= H(row_start:row_end,col_start:col_end);
-            firstmat=[Hij, computeHijcomb(Hij,J)];
+            firstmat=[Hij, computeHijcomb(Hij,J,Nc,N,Nsc)];
 
             if(n==1)
             currsymb= ausers(j,(i-1)*upper+n);

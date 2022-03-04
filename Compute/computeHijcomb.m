@@ -1,7 +1,5 @@
-function[Hijcomb]= computeHijcomb(Hij,J)
-    Nc=31;
-    Nsc=5;
-    N=9;
+function[Hijcomb]= computeHijcomb(Hij,J,Nc,N,Nsc)
+   
 
     J_raised= J^(Nc*Nsc);
     J_raised_t= (J')^(Nc*Nsc);

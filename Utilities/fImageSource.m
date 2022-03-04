@@ -33,5 +33,8 @@ function [bitsOut,x,y]=fImageSource(filename,P)
     [x,y,z] = size(images);
     bitsOut = dec2bin(images(:))';
     bitsOut = double(bitsOut(:))-48; 
+    if(length(bitsOut)<P)
+        bitsOut=[bitsOut;zeros(P-length(bitsOut),1)];
+    end
  
 end

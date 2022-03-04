@@ -30,9 +30,23 @@ function[c]= PNSeqGen()
     
     c(:,1)= gold_seq(:,positions(1));
     c(:,2)= gold_seq(:,8);
-    c(:,3)= mseq3;      %gold_seq(:,12);
-    c(:,4)= mseq4; % gold_seq(:,20);
-    c(:,5)= mseq5; %gold_seq(:,27);
+
+    k=(1:Nc);
+    gold_seq=zeros(Nc,Nc+2);
+    for it=1:numel(k)
+        gold_seq(:,it)= fGoldSeq(mseq4,mseq5,k(it));
+    end
+    gold_seq(:,Nc+1)= mseq4;
+    gold_seq(:,Nc+2)= mseq5;
+
+    [bal_codes2,positions2]= fFindBalancedGoldCodes(gold_seq);
+
+    c(:,3)= gold_seq(:,positions2(1));
+    c(:,4)= gold_seq(:,4);
+    c(:,5)= gold_seq(:,5);
+%     c(:,3)= mseq3;      %gold_seq(:,12);
+%     c(:,4)= mseq4; % gold_seq(:,20);
+%     c(:,5)= mseq5; %gold_seq(:,27);
 
 
     disp('check');

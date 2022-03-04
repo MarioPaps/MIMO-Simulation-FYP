@@ -61,7 +61,6 @@ P_Tx=  (1/length(A))*( A*A');
 P_MAI2= (1/width(MAI))* (MAI(1,:)* MAI(1,:)');
 P_MAI3= (1/width(MAI))* (MAI(2,:)* MAI(2,:)');
 P_MAI4= (1/width(MAI))* (MAI(3,:)* MAI(3,:)');
-Pnoise= abs( P_Tx/SNR_abs);
 %% H for equation 17
 J = [zeros(1,2*Nc*Nsc-1) 0; eye(2*Nc*Nsc-1), zeros(2*Nc*Nsc-1,1)];
 upper=NoSymbs/Nsc;
@@ -82,19 +81,22 @@ end
 %% eqn17 compact
 x=zeros(N*Next,upper);
 for n=1:upper
-    store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,Pnoise);
+    store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,0.1);
     x(:,n)=store;
 end
+Pnoise= twodpower(x)/SNR_abs;
+noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
+x=x+noise;
 %% eqn 24
 G= computeG(gamma,K);
 Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise);
-[Pn_theor,~]=findPn(Rxx_theor,1);
+[Pn_theor,~]=findPn(Rxx_theor,M);
 Rxx_prac= (1/width(x))* (x) * (x)';
 %% 2d cost function inputs
 [akj,Fkj]=findvecs(Fjvec,c(:,1),Nc,Nsc,Ts);
 x_res= reshape(x,2*Nc*Nsc,[]);
 Rxx_res=(1/width(x_res))* (x_res)*ctranspose(x_res);
-[Pn_res,~]= findPn(Rxx_res,M);
+[Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M);
 %% 2d cost function
 [cost2d,del_est,uk_est]= TwoDcost(N,Nc,Nsc,Fjvec,akj,Fkj,Pn_res,J);
 figure;
@@ -106,35 +108,36 @@ title('Joint Delay-Doppler Velocity Estimation');
 %% 1d cost function
 [Pn,lambda_min]= findPn(Rxx_theor,M);
 del_est=[14,11,3]; 
-vel_est=[21,67,120];
-[cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
+vel_est=[20,66,120];
+[cost1d]=OneDCost(del_est,vel_est,Fjvec,r,Pn_theor,J,c(:,1),Nsc,K);
+[~,DOAest]=maxk(max(cost1d),K);
 Colours = {'red','g','blue'};
 figure;
 for k=1:K
-    plot(20*log10(cost1d(k,:)),'Color',Colours{k});
+    txt = ['Multipath ',num2str(k) ];
+    plot(20*log10(cost1d(k,:)),'Color',Colours{k},'DisplayName',txt);
     hold on;
 end
-xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation');
-[~,DOAest]=maxk(max(cost1d),K);
+xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation'); legend('show');
 hold off;
-%% gamma_kj ampl. estimation for one path
-k=1;
-evals= eig(Rxx_prac);
-lambda_min= min(evals);
-[Pcompkjun,hkallj]= gAmpSearch(gamma,Rxx_prac,lambda_min,H,k,M,Nsc,N,Next);
-psi0=phi_rad;
-%% gamma_kj phase estimation for one path
-phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,psi0,N,Next,Nsc);
-gammakj_desuser= wrapTo2Pi(angle(gamma(1,1:Nsc)));
-%gammakj_desuser(gammakj_desuser<1)=0;
-display_res= [];
-for iter=1:length(phase_est)
-    display_res(iter,:)=[ gammakj_desuser(iter),phase_est(iter)];
-end
-figure;
-% display_res=[2,2;3,4];
-stem(display_res);
-xlabel('Subcarrier Index'); ylabel('Phase Estimate(rad)');
+% %% gamma_kj ampl. estimation for one path
+% k=1;
+% evals= eig(Rxx_prac);
+% lambda_min= min(evals);
+% [Pcompkjun,hkallj]= gAmpSearch(gamma,Rxx_prac,lambda_min,H,k,M,Nsc,N,Next);
+% psi0=phi_rad;
+% %% gamma_kj phase estimation for one path
+% phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,psi0,N,Next,Nsc);
+% gammakj_desuser= wrapTo2Pi(angle(gamma(1,1:Nsc)));
+% %gammakj_desuser(gammakj_desuser<1)=0;
+% display_res= [];
+% for iter=1:length(phase_est)
+%     display_res(iter,:)=[ gammakj_desuser(iter),phase_est(iter)];
+% end
+% figure;
+% % display_res=[2,2;3,4];
+% stem(display_res);
+% xlabel('Subcarrier Index'); ylabel('Phase Estimate(rad)');
 
 
 

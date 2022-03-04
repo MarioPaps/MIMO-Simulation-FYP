@@ -12,7 +12,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function[no_users]= EstimateNumUsers(Rxx,N,L)
+function[noMDL,noAIC,MDL,AIC]= EstimateNumUsers(Rxx,N,L)
     d= ( eig(Rxx));
     d= abs(sort(d,'descend')); %abs is needed to remove imaginary part from eigenvalue matrix
     LF=zeros(1,N);
@@ -35,10 +35,13 @@ function[no_users]= EstimateNumUsers(Rxx,N,L)
     end
     [~,pos_min_AIC]=min(AIC);
     [~,pos_min_MDL]=min(MDL);
-    if(pos_min_AIC==pos_min_MDL)
-       no_users=pos_min_AIC-1;
-    else
-        no_users=pos_min_MDL-1;
-    end
+    noMDL=pos_min_MDL-1;
+    noAIC=pos_min_AIC-1;
+
+%     if(pos_min_AIC==pos_min_MDL)
+%        no_users=pos_min_AIC-1;
+%     else
+%         no_users=pos_min_MDL-1;
+%     end
 
 end

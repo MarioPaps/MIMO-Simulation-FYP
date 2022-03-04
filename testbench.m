@@ -93,4 +93,9 @@ h=[1 3; 2 4]
 holder= h.*h
 c= sum(h.*h,1)
 Pn=ones(size(h));
-
+%% 
+tic;
+for i=1:3
+    disp(i);
+end
+toc;

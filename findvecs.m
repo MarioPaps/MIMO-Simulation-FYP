@@ -22,9 +22,9 @@ function[akj,Fkj]= findvecs(Fjvec,user1pn,Nc,Nsc,Ts)
         for uk=rad_vel_range
                 Fscalar= - ((2*pi*(Fc+Fj)*uk*Ts)/lightvel);
                 Fstore= exp(1i*full_range'*Fscalar );
-                position= (j-1)*(uk)+uk;
-%               Fkj(:,uk,j)=Fstore;
-                Fkj(:,position)=Fstore;
+              %  position= (j-1)*(uk)+uk;
+              Fkj(:,uk,j)=Fstore;
+              %  Fkj(:,position)=Fstore;
         end
     end
 

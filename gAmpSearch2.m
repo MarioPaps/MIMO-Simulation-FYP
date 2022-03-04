@@ -19,28 +19,25 @@ function[Pcompkjun,hkallj]= gAmpSearch2(gamma,Rxx,lambda_min,H,k,K,M,Nsc,N,Next,
         for j=1:Nsc
              products(:,:,j)= (hkallj(:,j))*(hkallj(:,j))';
         end
-
+        gamma_range=(0:0.05:1);
         %perform cost function search
         for j=1:Nsc
-            ksi=[];
-            for iter=1:length(gamma_possible)
-                Rkjgamma=Rxx-lambda_min-(gamma_possible(iter)^2*products(:,:,j));
+            ksi=zeros(Nsc,1);
+            for iter=1:length(gamma_range)
+                Rkjgamma=Rxx-lambda_min-(gamma_range(iter)^2*products(:,:,j));
                 eigenvalues= eig(Rkjgamma);
                 [pos_eval,neg_eval,~,~]= evals(eigenvalues);
                 ksi(iter)=(sum(pos_eval+1)) + 10*log10(sum(abs(neg_eval)));
             end
-            gammakj=min(ksi(iter))/100000; %this is scaled badly
-
+            gammakj(j)=min(ksi);%/100000; %this is scaled badly
+            gammakj(j)= gamma_possible(j);
+            
+Rkjun((j-1)*N*Next+1: j*N*Next, (j-1)*N*Next+1: j*N*Next)= Rxx-(gammakj(j)^2)*products(:,:,j);
+holder=Rkjun((j-1)*N*Next+1: j*N*Next, (j-1)*N*Next+1: j*N*Next);
+Pkjun= findPn(holder,M);
+Pcompkjun((j-1)*N*Next+1: j*N*Next,(j-1)*N*Next+1: j*N*Next) = eye(N*Next)-Pkjun;
         end
-        Pcompkjun=0;
-
-
-
-
-
-
-
-
+%         Pcompkjun=0;
 
 
 end

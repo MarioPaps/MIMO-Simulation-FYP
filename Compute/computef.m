@@ -1,8 +1,7 @@
 %objective is to compute f_ij for all n
-function[fi]= computef(in,vels,Fjvec,Fc,Tcs,lightvel,N_bar)
+function[fi]= computef(in,vels,Fjvec,Fc,Tcs,lightvel,K)
      Nsc=length(Fjvec);
      fi=[];
-     K=3;
      for n=1:width(in)
          count=1;
          for j=1:Nsc

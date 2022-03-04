@@ -11,13 +11,12 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
         row_end= user*N*Next;
         col_start=(j-1)*K+1;
         col_end= j*K;
-        term= H(row_start:row_end,col_start:col_end)*G(:,col_start:col_end)*...
-           ctranspose(H(row_start:row_end,col_start:col_end));
+        term= H(row_start:row_end,col_start:col_end)*G(:,col_start:col_end)*ctranspose(H(row_start:row_end,col_start:col_end));
+       
 
         Rdes= Rdes+term;
 
-        H1jcomb= computeHijcomb(H(row_start:row_end,col_start:col_end),J);
-
+        H1jcomb= computeHijcomb(H(row_start:row_end,col_start:col_end),J,Nc,N,Nsc);
         term2=H1jcomb*(kron(eye(2),G(:,col_start:col_end)))*ctranspose(H1jcomb);
         Risi= Risi+term2;
     end
@@ -32,7 +31,7 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
            g_stop= col_end+(i-1)*K*Nsc;
             
            Hij=H(row_start:row_end,col_start:col_end);
-           firstmat=[computeHijcomb(Hij,J),Hij];
+           firstmat=[computeHijcomb(Hij,J,Nc,N,Nsc),Hij];
            
            check=firstmat*kron(eye(K),G(:,g_start:g_stop))*ctranspose(firstmat);
            Rmai=Rmai+check;
