@@ -7,6 +7,6 @@ function[Pn, Evals]= findPn(Rxx,M)
     Es= E(:,1:M);
     En= E(:,M+1:end);
     Ps= Es*inv(ctranspose(Es)*Es)*ctranspose(Es);
-    Pn= En*inv(ctranspose(En)*En)*ctranspose(En);
+    %Pn= En*inv(ctranspose(En)*En)*ctranspose(En);
     Pn= eye(size(Ps))-Ps;
 end

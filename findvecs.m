@@ -5,8 +5,8 @@ function[akj,Fkj]= findvecs(Fjvec,user1pn,Nc,Nsc,Ts)
     lightvel=3e8;
     Fc=20e9;
     akj=zeros(2*Nc*Nsc,length(del),Nsc);
-%     Fkj=zeros(2*Nc*Nsc,length(rad_vel_range),Nsc);
-    Fkj=zeros(2*Nc*Nsc,Nsc*length(rad_vel_range));
+     Fkj=zeros(2*Nc*Nsc,length(rad_vel_range),Nsc);
+%    Fkj=zeros(2*Nc*Nsc,Nsc*length(rad_vel_range));
     values=zeros(Nsc*length(del),length(rad_vel_range));
 
     temp1= kron([user1pn;zeros(Nc,1)], ones(Nsc,1));

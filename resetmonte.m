@@ -102,7 +102,7 @@ end
  [akj,Fkj]=findvecs(Fjvec,c(:,1),Nc,Nsc,Ts);
  vel_est=[];
 tic;
- for trial=1:1
+ for trial=2:2
       uk_est=zeros(length(SNR),K);
      for ind=1:length(SNR)
         x_res= reshape(x_noise{trial,ind},2*Nc*Nsc,[]);

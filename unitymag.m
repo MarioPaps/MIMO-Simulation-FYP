@@ -6,10 +6,4 @@ function[unity]=unitymag(in)
             unity(knd,ind)= in(knd,ind)/ abs(in(knd,ind));
         end
     end
-
-
-
-
-
-
 end
