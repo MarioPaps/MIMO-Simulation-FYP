@@ -1,5 +1,5 @@
-function[cost,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays,akj,Fkj,Pn,J) 
-    rad_vel_range=1:140;
+function[cost,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays,rad_vel_range,akj,Fkj,Pn,J) 
+    
     del=0:Nc*Nsc-1;
     J_powers=cell(1,length(del));
     for delk=del
@@ -23,11 +23,11 @@ function[cost,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays,akj,Fkj,Pn,J)
     end
 %     cost=0;
     cost=abs(cost);
-    del_est=0;
-    uk_est=0;
-
-
-
-
-
+    uk_est=zeros(1,K);
+    del_est=delays;
+    for it=1:length(delays)
+        [~,pos]= max(cost(delays(it)+1,:));
+        uk_est(it)=rad_vel_range(pos);
+        %cost(delays(it)+1,pos)=  cost(delays(it)+1,pos)+ 10;
     end
+end

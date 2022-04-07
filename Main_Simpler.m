@@ -85,7 +85,7 @@ PMAI= twodpower(m2);
 [r,r_bar]=TxRxArr(lightvel,Fc);
 [delays,~,DODs,DOAs,VDops]= Channel_Param_Gen();
 beta=[0.8*exp(1i*deg2rad(310)),0.7,0.9; 0.02 0.04 0.15; 0.21 0.18 0.25; 0.35 0.31 0.3; 0.19 0.02 0.04];
-beta=beta';
+beta=beta.';
 delays=round(delays/10);
 
 f1j= computef(A,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -129,8 +129,8 @@ end
 %% eqn17 compact
 x=zeros(N*Next,upper);
 for n=1:upper
-   % store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,0.1);
-   store= findX(atran,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,0.1);
+    store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,0.1);
+   %store= findX(atran,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,upper,0.1);
     x(:,n)=store;
 end
 % Pnoise= twodpower(x)/SNR_abs;

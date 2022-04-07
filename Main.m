@@ -160,11 +160,12 @@ for i=1:M
     end
 end
 %% eqn17 compact
-x=zeros(N*Next,L);
-for n=1:L
-    store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,L,Pnoise);
-    x(:,n)=store;
-end
+% x=zeros(N*Next,L);
+% for n=1:L
+%     store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,L,Pnoise);
+%     x(:,n)=store;
+% end
+load("x.mat");
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
 %% eqn 24
@@ -174,10 +175,10 @@ Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise);
 [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% 2d cost function inputs
-[akj,Fkj]=findvecs(Fjvec,c(:,1),Nc,Nsc,Ts);
+[akj,Fkj]=findvecs(Fjvec,(0:140),c(:,1),Nc,Nsc,Ts);
 x_res= reshape(x,2*Nc*Nsc,[]);
 Rxx_res= (1/width(x_res))* (x_res)*ctranspose(x_res);
-[Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M);
+[Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M*Nsc);
 %% 2d cost function
 tic;
 [cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),akj,Fkj,Pn_res,J);
@@ -189,7 +190,7 @@ xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 title('Joint Delay-Doppler Velocity Estimation');
 toc;
 %% 1d cost function
-[Pn,~]= findPn(Rxx_theor,M*Nsc);
+[Pn,~]= findPn(Rxx_prac,M*Nsc);
 del_est=[140,110,30]; 
 vel_est=[20,66,120];
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
@@ -238,6 +239,16 @@ phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,phi_rad,N,Next,Nsc,K);
 % xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 % title('Joint Delay-Doppler Velocity Estimation');
 % toc;
+%% Spatiotemporal beamformer weights
+tic;
+w=zeros(2*N*Nc*Nsc,Nsc);
+for j=1:Nsc
+    Hj= H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
+    Gj= G(:, (j-1)*K+1: j*K);
+    gammaj= gamma(:,j);
+    w(:,j)= subspaceWeightsj(Rxx_prac,Hj,Gj,gammaj,M,Nsc,Nc,N);
+end
+toc;
 
 
 

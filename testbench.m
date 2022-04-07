@@ -99,3 +99,22 @@ for i=1:3
     disp(i);
 end
 toc;
+%% 
+x = logspace(5, 6, 25);                         % Create Data
+y = rand(size(x));                              % Create Data
+figure
+semilogx(x, y,'o');
+grid on;
+xlim([1E2 1E6])
+%% test random generation
+rng shuffle
+rand
+%% 
+SNR_abs=[0.5,3.1623,5,40,50,400,500,1000,4000,5000];
+y=ones(1,length(SNR_abs));
+
+figure;
+loglog(SNR_abs*L,y,'o');
+%% 
+
+

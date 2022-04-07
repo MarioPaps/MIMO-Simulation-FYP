@@ -1,5 +1,5 @@
-function[akj,Fkj]= findvecs(Fjvec,user1pn,Nc,Nsc,Ts)
-    rad_vel_range=1:140;
+function[akj,Fkj]= findvecs(Fjvec,rad_vel_range,user1pn,Nc,Nsc,Ts)
+    
     del=(0:Nc*Nsc-1);
     full_range=(0:1:2*Nc*Nsc-1);
     lightvel=3e8;
@@ -7,7 +7,7 @@ function[akj,Fkj]= findvecs(Fjvec,user1pn,Nc,Nsc,Ts)
     akj=zeros(2*Nc*Nsc,length(del),Nsc);
      Fkj=zeros(2*Nc*Nsc,length(rad_vel_range),Nsc);
 %    Fkj=zeros(2*Nc*Nsc,Nsc*length(rad_vel_range));
-    values=zeros(Nsc*length(del),length(rad_vel_range));
+%     values=zeros(Nsc*length(del),length(rad_vel_range));
 
     temp1= kron([user1pn;zeros(Nc,1)], ones(Nsc,1));
     for j=1:Nsc
@@ -19,12 +19,14 @@ function[akj,Fkj]= findvecs(Fjvec,user1pn,Nc,Nsc,Ts)
                  prod= temp1.*temp2;
                  akj(:,l_ik+1,j)=prod; %a_j[l_ik] for a specific l_ik      
         end
+        count=1;
         for uk=rad_vel_range
                 Fscalar= - ((2*pi*(Fc+Fj)*uk*Ts)/lightvel);
                 Fstore= exp(1i*full_range'*Fscalar );
               %  position= (j-1)*(uk)+uk;
-              Fkj(:,uk,j)=Fstore;
-              %  Fkj(:,position)=Fstore;
+              Fkj(:,count,j)=Fstore;
+              count=count+1;
+             
         end
     end
 

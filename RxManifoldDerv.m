@@ -1,6 +1,0 @@
-function[]=RxManifoldDerv()
-
-
-
-
-end

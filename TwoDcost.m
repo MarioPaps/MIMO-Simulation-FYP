@@ -1,5 +1,4 @@
-function[cost,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays,akj,Fkj,Pn,J) 
-    rad_vel_range=1:140;
+function[cost,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays,rad_vel_range,akj,Fkj,Pn,J) 
     del=0:Nc*Nsc-1;
     J_powers=cell(1,length(del));
     for delk=del
