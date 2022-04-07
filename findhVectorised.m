@@ -11,7 +11,7 @@ function[hikj]= findhVectorised(DOA,l_ik,uk,J,Fj,Nsc,array,userpn)
     J_raised= J^l_ik;
     constprod= kron([userpn;zeros(Nc,1)], ones(Nsc,1));
 
-    Sikj=computeManifoldRx(DOA,0,array,Fc,Fj,lightvel,"hwl");
+    Sikj=computeManifoldRx(DOA,0,array,Fc,Fj,lightvel);
 
     diff= 2*pi*Fj*(del-l_ik)*Ts;
     diff=diff';
