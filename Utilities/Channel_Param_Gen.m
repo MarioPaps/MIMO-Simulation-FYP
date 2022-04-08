@@ -2,10 +2,9 @@
 %beta coefficients for all users and subcarriers
 %Doppler velocities for all users and paths
 %delays,DODs,DOAs  for the desired user
-function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen()
+function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen(set_same_vel,set_same_DOA)
     %declare constants
     K=3;
-    Nsc=5;
     M=5;
     %fading coefficients
     %3 rows and 5 columns
@@ -83,6 +82,14 @@ function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen()
     vels= zeros(M,K);
     vels(1,:)= [20 66 120];
     vels(2:end,:)= [31 79 94; 83 87 101; 40 31 43; 29 45 86];
+    
+    if(set_same_vel==1)
+       vels(1,:)=20;
+    end
+    if(set_same_DOA==1)
+        DOAs(1,2)=DOAs(1,3); %make 2 paths have DOA 280
+        DOAs(2,2)= DOAs(1,3); %user 2 on path 2 also has DOA 280
+    end
 end
 
 

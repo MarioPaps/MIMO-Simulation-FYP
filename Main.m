@@ -174,17 +174,18 @@ Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise);
 [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% 2d cost function inputs
-[akj,Fkj]=findvecs(Fjvec,(0:140),c(:,1),Nc,Nsc,Ts);
+[akj,Fkj]=findvecs(Fjvec,(1:140),c(:,1),Nc,Nsc,Ts);
 x_res= reshape(x,2*Nc*Nsc,[]);
 Rxx_res= (1/width(x_res))* (x_res)*ctranspose(x_res);
 [Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M*Nsc);
 %% 2d cost function
 tic;
+%[cost2d,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
 [cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
 figure;
 rv_range=(1:140);
 delay_range=(0:Nc*Nsc-1);
-surf(rv_range,delay_range,20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
+surf(rv_range,delay_range,10*log((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 title('Joint Delay-Doppler Velocity Estimation');
 shading('interp');

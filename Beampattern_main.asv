@@ -33,6 +33,7 @@ end
 ai1=Demux(A,width(A),Nsc);
 MAIres=cell(1,M-1);
 for user=2:M
+    %MAIres=[MAIres, Demux(MAI(user-1,:),width(A),Nsc)]; 
     MAIres{user-1}=Demux(MAI(user-1,:),width(A),Nsc);
 end
 ausers=[ai1, cell2mat(MAIres)];
@@ -41,8 +42,12 @@ ausers= unitymag(ausers); %every element with unity magnitude
 ausers=ausers- real(mean(mean(ausers)));
 %% Define channel parameters
 [r,r_bar]=TxRxArr(lightvel,Fc);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,1);
-%% find f and gamma
+
+[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen();
+%comment 4: for simplicity, doppler freqs of first user paths are equal
+%->set velocity=20
+VDops(1,:)=20;
+
 f1j= computef(ai1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(ai1,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
 f3j= computef(ai1,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -79,25 +84,27 @@ for i=1:M
         H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
     end
 end
-%% find x-eqn 17
+%% eqn17 compact
 x=zeros(N*Next,L);
 for n=1:L
-   x(:,n)= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,L,Pnoise);
+    store= findX(ausers,f,gamma,H,J,M,Nsc,Nc,N,Next,K,n,L,Pnoise);
+    x(:,n)=store;
 end
 % load("x.mat");
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
 %% eqn 24
+%load("x.mat");
 G= computeG(gamma,K);
-Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise); %compute theoretical cov. matx
+Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise);
 [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
-%% Delay-Velocity cost function inputs
+%% 2d cost function inputs
 [akj,Fkj]=findvecs(Fjvec,(1:140),c(:,1),Nc,Nsc,Ts);
 x_res= reshape(x,2*Nc*Nsc,[]);
 Rxx_res= (1/width(x_res))* (x_res)*ctranspose(x_res);
 [Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M*Nsc);
-%% Delay-Velocity cost function
+%% 2d cost function
 tic;
 [cost2d,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
 %[cost2d,del_est,uk_est]=faster2dcost(K,Nc,Nsc,delays(1,:),(0:140),akj,Fkj,Pn_res,J);
@@ -108,8 +115,8 @@ surf(rv_range,delay_range,20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 title('Joint Delay-Doppler Velocity Estimation');
 toc;
-%% DOA cost function
-[Pn,~]= findPn(Rxx_theor,M*Nsc);
+%% 1d cost function
+[Pn,~]= findPn(Rxx_prac,M*Nsc);
 del_est=[140,110,30]; 
 vel_est=[20,66,120];
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
@@ -146,21 +153,25 @@ for delk= 0:Nc*Nsc-1
     end
 end
 toc;
-%% approach 1 ->use 1 subcarrier
+%% approach 1 ->use 1 subcarrier : Fj=0
 gain=zeros(Nc*Nsc,360);
 for delk=0:Nc*Nsc-1
     for DOA=1:360
         gain(delk+1,DOA)= ctranspose(w(:,1))* hdoppstarvecs( delk*2790+1: (delk+1)*2790, DOA);
     end
 end
+
 figure;
-gain= abs(gain); 
-surf((1:360),(0:Nc*Nsc-1),gain,'FaceAlpha',1,'EdgeAlpha',0.5);
+%delay_range=(0:Nc*Nsc-1);
+angle_range=(1:360)';
+delay_range=(0:Nc*Nsc-1)';
+gain= abs(gain); %*630;
+surf(gain,'FaceAlpha',1,'EdgeAlpha',0.5);
 shading('interp');
 colormap('jet');
-%% approach 1 -> sum across subcarriers
+%% sum approach
 wjtotal= sum(w,2);
-%h_overall= zeros(2790*Nc*Nsc,360);
+h_overall= zeros(2790*Nc*Nsc,360);
 for delk=0:Nc*Nsc-1 
     for DOA=1:360
         delcurr= hdoppstarvecs(delk*2790+1: (delk+1)*2790, DOA:360:end); %for a given delay,theta and Fj
@@ -171,39 +182,39 @@ for delk=0:Nc*Nsc-1
 end
 
 figure;
-gain= abs(gain); 
-surf((1:360),(0:Nc*Nsc-1),gain,'FaceAlpha',1,'EdgeAlpha',0.5);
+surf(abs(gain));
 shading('interp');
 colormap('jet');
-%% space-only manifold beampattern ->figure 7b
-%weights are 1s
-%plotted with manifold as h=kron(S, J^delay * zero-padded user 1 pn code)
+%% space-only manifold beampattern
+%manifold vector for all l,thetas
+%weights ones
+% for DOA=1:360
+%     manifold= computeManifoldRx(DOA,0,r,Fc,Fjvec(1),lightvel,"hwl");
+% end
+%spatiotemporal manifold or space-only manifold
+% space_gain=zeros(Nc*Nsc,360);
+% for delk=0:Nc*Nsc-1
+%     for DOA=1:360
+% %        % space_gain(delk+1,DOA)= ones(1,2*N*Nc*Nsc) * hdoppstarvecs( delk*2790+1: (delk+1)*2790, DOA);
+% %        space_gain
+%     end
+% end
+% figure;
+% surf(abs(space_gain));
 space_gain=[];
 for delk=0:Nc*Nsc-1
     for DOA=1:360
         temp= getSpatiotemporalManifold(delk,DOA,J,c(:,1),r,Fc,0,lightvel);
         space_gain(delk+1,DOA)= ones(1,2*N*Nc*Nsc) * temp;
     end
+
 end
+%% 
+
 figure;
 surf(abs(space_gain));
 shading('interp');
 colormap('jet');
-
-%alternative manifold -> S
-%weights 1s
-% for delk=0:Nc*Nsc-1
-%     % for DOA=1:360
-% %     manifold= computeManifoldRx(DOA,0,r,Fc,Fjvec(1),lightvel,"hwl");
-% %     end
-% space_gain(delk+1,DOA)= ones(1,2*N*Nc*Nsc) * manifold;
-% end
-
-
-
-
-
-
 
 
 
