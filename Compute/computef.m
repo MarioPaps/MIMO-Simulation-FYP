@@ -1,4 +1,4 @@
-%objective is to compute f_ij for all n
+%the function computes for user i all f_j,n
 function[fi]= computef(in,vels,Fjvec,Fc,Tcs,lightvel,K)
      Nsc=length(Fjvec);
      fi=[];

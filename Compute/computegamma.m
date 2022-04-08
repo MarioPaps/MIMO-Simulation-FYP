@@ -1,4 +1,4 @@
-
+%the function implements equation 20
 function[gammai]= computegamma(beta,DOD,Fjvec,array,K)
     Fc=20e9;
     light_vel=3e8;

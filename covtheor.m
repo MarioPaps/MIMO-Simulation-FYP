@@ -1,4 +1,4 @@
-%objective: compute Rxx_theor
+%the function computes the theoretical covariance matrix in equation 24
 function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
     user=1;
     K=3;
@@ -13,12 +13,11 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
         col_end= j*K;
         term= H(row_start:row_end,col_start:col_end)*G(:,col_start:col_end)*ctranspose(H(row_start:row_end,col_start:col_end));
        
-
-        Rdes= Rdes+term;
+        Rdes= Rdes+term; %desired term
 
         H1jcomb= computeHijcomb(H(row_start:row_end,col_start:col_end),J,Nc,N,Nsc);
         term2=H1jcomb*(kron(eye(2),G(:,col_start:col_end)))*ctranspose(H1jcomb);
-        Risi= Risi+term2;
+        Risi= Risi+term2; %R_ISI
     end
 
     for i=2:M
@@ -34,12 +33,12 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
            firstmat=[computeHijcomb(Hij,J,Nc,N,Nsc),Hij];
            
            check=firstmat*kron(eye(K),G(:,g_start:g_stop))*ctranspose(firstmat);
-           Rmai=Rmai+check;
+           Rmai=Rmai+check; %R_MAI
 
         end
     end
-    Rnn= Pnoise*eye(N*Next);
-    Rxx_theor=Rdes+Risi+Rmai+Rnn;
+    Rnn= Pnoise*eye(N*Next); %R_nn
+    Rxx_theor=Rdes+Risi+Rmai+Rnn; %equation 24
 end
 
 

@@ -1,3 +1,4 @@
+%the function computes G in equation 25 for all users
 function[G]=computeG(gamma,K)
     G=zeros(K,K*width(gamma));
     for iter=1:width(gamma)
