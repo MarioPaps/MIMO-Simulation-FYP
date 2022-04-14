@@ -4,7 +4,6 @@ addpath('.\Compute\');
 NoSymbs=200;
 M=5; %# users
 N_bar=16;
-N=9;
 Nsc=5;
 Nc=31;
 Ts=0.1e-6;
@@ -15,8 +14,8 @@ K=3; %3 paths per user
 lightvel=3e8;
 lambda= lightvel/Fc;
 Fjvec=((0:Nsc-1)*(1/Tc))';
-%% Generate user and MAI data
 c=PNSeqGen();
+%% Generate user and MAI data
 % load("bitstream.mat");
 % bits=bitstream(1,:);
 bits= round(rand(1,2*NoSymbs));
@@ -40,14 +39,16 @@ ausers= unitymag(ausers); %every element with unity magnitude
 %make the signal zero mean
 ausers=ausers- real(mean(mean(ausers)));
 %% Define channel parameters
-[r,r_bar]=TxRxArr(lightvel,Fc);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,1);
-%% find f and gamma
-f1j= computef(ai1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
-f2j= computef(ai1,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
-f3j= computef(ai1,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
-f4j= computef(ai1,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
-f5j= computef(ai1,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
+[r,r_bar]=TxRxArr(lightvel,Fc,"default");
+%[r,r_bar]=TxRxArr(lightvel,Fc,"50");
+N=length(r);
+[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0);
+% find f and gamma
+f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
+f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
+f3j= computef(NoSymbs/Nsc,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
+f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
+f5j= computef(NoSymbs/Nsc,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 
 f=[f1j,f2j,f3j,f4j,f5j];
 clear f1j f2j f3j f4j f5j;
@@ -134,6 +135,7 @@ for j=1:Nsc
     w(:,j)= subspaceWeightsj(Rxx_prac,Hj,Gj,gammaj,M,Nsc,Nc,N);
 end
 toc;
+wjtotal= sum(w,2);
 %% Doppler STAR vectors 
 tic;
 hdoppstarvecs= zeros(Nc*Nsc*2*N*Nc*Nsc,360*Nsc);
@@ -159,7 +161,6 @@ surf((1:360),(0:Nc*Nsc-1),gain,'FaceAlpha',1,'EdgeAlpha',0.5);
 shading('interp');
 colormap('jet');
 %% approach 1 -> sum across subcarriers
-wjtotal= sum(w,2);
 %h_overall= zeros(2790*Nc*Nsc,360);
 for delk=0:Nc*Nsc-1 
     for DOA=1:360
@@ -167,6 +168,7 @@ for delk=0:Nc*Nsc-1
         deldoa_sum= sum(delcurr,2); %sum across subcarriers to obtain a 2790x1 vector for delay,theta
        % h_overall(delk*2790+1: (delk+1)*2790,DOA)= deldoa_sum;
         gain(delk+1,DOA)= ctranspose(wjtotal)* deldoa_sum;
+       % gain(delk+1,DOA)= ctranspose(w_RAKE_total)* deldoa_sum;
     end
 end
 
@@ -182,7 +184,7 @@ space_gain=[];
 for delk=0:Nc*Nsc-1
     for DOA=1:360
         temp= getSpatiotemporalManifold(delk,DOA,J,c(:,1),r,Fc,0,lightvel);
-        space_gain(delk+1,DOA)= ones(1,2*N*Nc*Nsc) * temp;
+        space_gain(delk+1,DOA)= wjtotal' * temp;
     end
 end
 figure;
@@ -199,9 +201,15 @@ colormap('jet');
 % space_gain(delk+1,DOA)= ones(1,2*N*Nc*Nsc) * manifold;
 % end
 
+%% Estimate of transmitted symbol vector
+a_estim= w'*x(:,1);
+%% obtaining equations 47-49
+[w_RAKE,w_dec]=weights4749(H,gamma,K,N,Nc,Nsc);
+w_RAKE_total= sum(w_RAKE,2);
 
-
-
+%% new idea space
+DOAest=[60,280,280];
+space_gain= space_only_beampattern(DOAest,r,Fc,Fjvec,lightvel,Nc,Nsc);
 
 
 

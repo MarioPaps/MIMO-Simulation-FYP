@@ -1,4 +1,5 @@
-function[r,r_bar]=TxRxArr(lightvel,Fc)
+%UCA:string parameter to generate two different Rx arrays
+function[r,r_bar]=TxRxArr(lightvel,Fc,UCA)
     lambda=lightvel/Fc;
     rx_bar=[2.56,2.37,1.81,0.98,0,-0.98,-1.81,-2.37,-2.56,-2.37,-1.81,-0.98,0,0.98,1.81,2.37]';
     ry_bar=[0,0.98,1.81,2.37,2.56,2.37,1.81,0.98,0,-0.98,-1.81,-2.37,-2.56,-2.37,-1.81,-0.98]';
@@ -7,11 +8,23 @@ function[r,r_bar]=TxRxArr(lightvel,Fc)
     %if r is in [m], I divide by (lambda/2) to give it (lambda/2) units
     %if r is in [lambda/2], I multiply by (lambda/2) to give it [m] units
     r_bar=r_bar*(lambda/2); %convert to meters
-    
-    rx=[1.43 0.90 -0.05 -0.98 -1.45 -1.24 -0.45 0.55 1.29]';
-    ry=[0.30 1.15 1.46 1.09 0.20 -0.77 -1.39 -1.36 -0.69]';
-    rz=zeros(length(rx),1);
-    r=[rx,ry,rz];
-    r= r*(lambda/2);
-   
+
+    if(UCA=="default")
+        rx=[1.43 0.90 -0.05 -0.98 -1.45 -1.24 -0.45 0.55 1.29]';
+        ry=[0.30 1.15 1.46 1.09 0.20 -0.77 -1.39 -1.36 -0.69]';
+        rz=zeros(length(rx),1);
+        r=[rx,ry,rz];
+        r= r*(lambda/2);
+    else
+         %define 500-element UCA or 50-element UCA
+        step= 360/500;
+        lambda=lightvel/Fc;
+        thetas= (0:step:360-step);
+        radius= (lambda/4)/ (sind(step/2));
+        rx= radius*cosd(thetas);
+        ry= radius*sind(thetas);
+        rz=zeros(size(rx));
+        r=[rx.',ry.',rz.'];
+    end
+           
 end

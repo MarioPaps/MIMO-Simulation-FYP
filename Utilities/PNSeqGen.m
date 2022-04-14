@@ -48,10 +48,8 @@ function[c]= PNSeqGen()
 %     c(:,4)= mseq4; % gold_seq(:,20);
 %     c(:,5)= mseq5; %gold_seq(:,27);
 
-
-    disp('check');
     c= -2*c+1;
-    disp('check2');
+    
 end
 
 

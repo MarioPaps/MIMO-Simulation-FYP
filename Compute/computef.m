@@ -1,8 +1,8 @@
 %the function computes for user i all f_j,n
-function[fi]= computef(in,vels,Fjvec,Fc,Tcs,lightvel,K)
+function[fi]= computef(len,vels,Fjvec,Fc,Tcs,lightvel,K)
      Nsc=length(Fjvec);
      fi=[];
-     for n=1:width(in)
+     for n=1:len
          count=1;
          for j=1:Nsc
              F_vels=-(1/lightvel)*(Fc+Fjvec(j))*vels;

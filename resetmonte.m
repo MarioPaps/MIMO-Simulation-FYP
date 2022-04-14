@@ -16,42 +16,36 @@ lightvel=3e8;
 Fjvec=((0:Nsc-1)*(1/Tc))';
 %% Generate user and MAI data
 c=PNSeqGen();
-% load("bitstream.mat");
-% bits=bitstream(1,:);
-bits= round(rand(1,2*NoSymbs));
-phi_rad=deg2rad(43);
-A= QPSKMod(bits,sqrt(2),phi_rad);
-MAI= zeros(M-1,width(A));
-%bitsMAI= bitstream(2,:);
-bitsMAI= round(rand(1,2*NoSymbs));
-MAI(1,:)= QPSKMod(bitsMAI,0.2,deg2rad(0)); %symbol streams have the same power
-
-for user=2:M-1
-    MAI(user,:)= shuffle(MAI(1,:));
-end
+bits= round(rand(1,2*NoSymbs)); %bitstream(1,:); % ;
+A= QPSKMod(bits,sqrt(2),deg2rad(43));
 ai1=Demux(A,width(A),Nsc);
+
+MAI=zeros(M-1,length(A));
 MAIres=cell(1,M-1);
+rng default
 for user=2:M
-    %MAIres=[MAIres, Demux(MAI(user-1,:),width(A),Nsc)]; 
+    bitsMAI= round(rand(1,2*NoSymbs));
+    MAI(user-1,:)= QPSKMod(bitsMAI,0.2,deg2rad(0));
     MAIres{user-1}=Demux(MAI(user-1,:),width(A),Nsc);
 end
+
 ausers=[ai1, cell2mat(MAIres)];
 ausers= unitymag(ausers); %every element with unity magnitude
-%make the signal zero mean
 ausers=ausers- real(mean(mean(ausers)));
 
 %the symbol stream of user 1 has bigger power than the others
 %Tx outputs
-[m1]=Tx(ai1,c(:,1),Nsc,N_bar,Tc);
-[m2]=Tx(MAIres{1},c(:,2),Nsc,N_bar,Tc);
-[m3]=Tx(MAIres{2},c(:,3),Nsc,N_bar,Tc);
-[m4]=Tx(MAIres{3},c(:,4),Nsc,N_bar,Tc);
-%[m5]=Tx(MAIres{4},c(:,5),Nsc,N_bar,Tc);
-mtot=[m1;m2;m3;m4];
+% [m1]=Tx(ai1,c(:,1),Nsc,N_bar,Tc);
+% [m2]=Tx(MAIres{1},c(:,2),Nsc,N_bar,Tc);
+% [m3]=Tx(MAIres{2},c(:,3),Nsc,N_bar,Tc);
+% [m4]=Tx(MAIres{3},c(:,4),Nsc,N_bar,Tc);
+% [m5]=Tx(MAIres{4},c(:,5),Nsc,N_bar,Tc);
+% mtot=[m1;m2;m3;m4;m5];
+% clear m1 m2 m3 m4 m5 
 %% Define channel parameters
 [r,r_bar]=TxRxArr(lightvel,Fc);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen();
-
+[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0);
+%find f and gamma
 f1j= computef(ai1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(ai1,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
 f3j= computef(ai1,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -62,12 +56,9 @@ gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
 gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar,K);
 gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
 gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
-%gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4];
-
 %% H for equation 17
 J = [zeros(1,2*Nc*Nsc-1) 0; eye(2*Nc*Nsc-1), zeros(2*Nc*Nsc-1,1)];
-L=NoSymbs/Nsc;
 Next= 2*Nc*Nsc;
 H=zeros(M*2*N*Nc*Nsc,K*Nsc);
 for i=1:M
@@ -82,7 +73,7 @@ for i=1:M
         H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
     end
 end
-%% 
+%% define MC simulation parameters
 SNR=[0.5,3.1623,5,40,50,250,500,2500,5000];
 L=200;
 xaxis= L*SNR;
@@ -90,7 +81,7 @@ SNR_db=10.*log10(SNR);
 numtrials=100;
 RMSEgamma= zeros(numtrials,length(SNR));
 RMSEDOA= zeros(numtrials,length(SNR));
-load("x.mat");
+%load("x.mat");
 %% obtain noiseless x
 x=zeros(N*Next,L);
 for n=1:L
@@ -101,7 +92,6 @@ x_noise= cell(numtrials,length(SNR));
 Pnoise= 1./SNR;
 for trial=1:numtrials
     for ind=1:length(SNR)
-%         Pnoise=1/SNR(ind);
         rng shuffle
         noise= sqrt(Pnoise(ind)/2)* (randn(size(x))+1i*randn(size(x)));
         x_noise{trial,ind}=x+noise;
@@ -167,11 +157,11 @@ init=0.01;
 angles=[60,200,280]; %predicted values
 theta=[];
 for k=1:K
-       theta=[theta, DOAs(1,k)-1:init: DOAs(1,k)+1];
+       theta=[theta, DOAs(1,k)-5:init: DOAs(1,k)+5];
 end
 
  for trial=1:1
-    for ind=1:length(SNR)
+    for ind=1:3
         del_est=[140,110,30];
         %uk_est= [20,60,120];
         uk_est= vel_est(ind, (trial-1)*K+1: trial*K);

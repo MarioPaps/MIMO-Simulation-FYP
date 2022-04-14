@@ -88,11 +88,11 @@ beta=[0.8*exp(1i*deg2rad(310)),0.7,0.9; 0.02 0.04 0.15; 0.21 0.18 0.25; 0.35 0.3
 beta=beta.';
 delays=round(delays/10);
 
-f1j= computef(A,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
-f2j= computef(MAI(1,:),VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
-f3j= computef(MAI(2,:),VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
-f4j= computef(MAI(3,:),VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
-f5j= computef(MAI(4,:),VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
+f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
+f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
+f3j= computef(NoSymbs/Nsc,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
+f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
+f5j= computef(NoSymbs/Nsc,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 
 f=[f1j,f2j,f3j,f4j,f5j];
 gamma1= computegamma(beta(:,1),DODs(1,:),Fjvec,r_bar,K);

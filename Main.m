@@ -46,11 +46,11 @@ ausers=ausers- real(mean(mean(ausers)));
 [r,r_bar]=TxRxArr(lightvel,Fc);
 [delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0);
 %find f and gamma
-f1j= computef(ai1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
-f2j= computef(ai1,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
-f3j= computef(ai1,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
-f4j= computef(ai1,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
-f5j= computef(ai1,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
+f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
+f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
+f3j= computef(NoSymbs/Nsc,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
+f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
+f5j= computef(NoSymbs/Nsc,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 
 f=[f1j,f2j,f3j,f4j,f5j];
 gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);

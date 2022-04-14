@@ -1,0 +1,2 @@
+x50.mat -> x with 50-element UCA
+x_small_b ->x with smaller betas
