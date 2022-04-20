@@ -6,12 +6,15 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
     Rdes=zeros(N*Next,N*Next);
     Risi=zeros(N*Next,N*Next);
     Rmai= zeros(N*Next,N*Next);
+%     Rdes=sparse(N*Next,N*Next);
+%     Risi=sparse(N*Next,N*Next);
+%     Rmai=sparse(N*Next,N*Next);
     for j=1:Nsc
         row_start=(user-1)*N*Next+1;
         row_end= user*N*Next;
         col_start=(j-1)*K+1;
         col_end= j*K;
-        term= H(row_start:row_end,col_start:col_end)*G(:,col_start:col_end)*ctranspose(H(row_start:row_end,col_start:col_end));
+        term=H(row_start:row_end,col_start:col_end)*G(:,col_start:col_end)*ctranspose(H(row_start:row_end,col_start:col_end)) ;
        
         Rdes= Rdes+term; %desired term
 
@@ -38,6 +41,7 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise)
         end
     end
     Rnn= Pnoise*eye(N*Next); %R_nn
+%    Rnn= Pnoise* speye(N*Next);
     Rxx_theor=Rdes+Risi+Rmai+Rnn; %equation 24
 end
 

@@ -18,25 +18,21 @@ c=PNSeqGen();
 %% Generate user and MAI data
 % load("bitstream.mat");
 % bits=bitstream(1,:);
-bits= round(rand(1,2*NoSymbs));
-phi_rad=deg2rad(43);
-A= QPSKMod(bits,sqrt(2),phi_rad);
-MAI= zeros(M-1,width(A));
-%bitsMAI= bitstream(2,:);
-bitsMAI= round(rand(1,2*NoSymbs));
-MAI(1,:)= QPSKMod(bitsMAI,0.2,deg2rad(0)); %symbol streams have the same power
-
-for user=2:M-1
-    MAI(user,:)= shuffle(MAI(1,:));
-end
+bits= bitstream(1,:); % round(rand(5,2*NoSymbs));
+A= QPSKMod(bits,sqrt(2),deg2rad(43));
 ai1=Demux(A,width(A),Nsc);
+
+MAI=zeros(M-1,length(A));
 MAIres=cell(1,M-1);
+rng default
 for user=2:M
+    bitsMAI= round(rand(1,2*NoSymbs));
+    MAI(user-1,:)= QPSKMod(bitsMAI,0.2,deg2rad(0));
     MAIres{user-1}=Demux(MAI(user-1,:),width(A),Nsc);
 end
+
 ausers=[ai1, cell2mat(MAIres)];
 ausers= unitymag(ausers); %every element with unity magnitude
-%make the signal zero mean
 ausers=ausers- real(mean(mean(ausers)));
 %% Define channel parameters
 [r,r_bar]=TxRxArr(lightvel,Fc,"default");
@@ -103,9 +99,7 @@ tic;
 [cost2d,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
 %[cost2d,del_est,uk_est]=faster2dcost(K,Nc,Nsc,delays(1,:),(0:140),akj,Fkj,Pn_res,J);
 figure;
-rv_range=(1:140);
-delay_range=(0:Nc*Nsc-1);
-surf(rv_range,delay_range,20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
+surf((1:140),(0:Nc*Nsc-1),20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Gain(dB)');
 title('Joint Delay-Doppler Velocity Estimation');
 toc;
@@ -171,35 +165,14 @@ for delk=0:Nc*Nsc-1
        % gain(delk+1,DOA)= ctranspose(w_RAKE_total)* deldoa_sum;
     end
 end
-
 figure;
 gain= abs(gain); 
 surf((1:360),(0:Nc*Nsc-1),gain,'FaceAlpha',1,'EdgeAlpha',0.5);
 shading('interp');
 colormap('jet');
 %% space-only manifold beampattern ->figure 7b
-%weights are 1s
-%plotted with manifold as h=kron(S, J^delay * zero-padded user 1 pn code)
-space_gain=[];
-for delk=0:Nc*Nsc-1
-    for DOA=1:360
-        temp= getSpatiotemporalManifold(delk,DOA,J,c(:,1),r,Fc,0,lightvel);
-        space_gain(delk+1,DOA)= wjtotal' * temp;
-    end
-end
-figure;
-surf(abs(space_gain));
-shading('interp');
-colormap('jet');
-
-%alternative manifold -> S
-%weights 1s
-% for delk=0:Nc*Nsc-1
-%     % for DOA=1:360
-% %     manifold= computeManifoldRx(DOA,0,r,Fc,Fjvec(1),lightvel,"hwl");
-% %     end
-% space_gain(delk+1,DOA)= ones(1,2*N*Nc*Nsc) * manifold;
-% end
+DOAest=[60,280,280];
+space_gain= space_only_beampattern(DOAest,r,Fc,Fjvec,lightvel,Nc,Nsc);
 
 %% Estimate of transmitted symbol vector
 a_estim= w'*x(:,1);
@@ -207,9 +180,8 @@ a_estim= w'*x(:,1);
 [w_RAKE,w_dec]=weights4749(H,gamma,K,N,Nc,Nsc);
 w_RAKE_total= sum(w_RAKE,2);
 
-%% new idea space
-DOAest=[60,280,280];
-space_gain= space_only_beampattern(DOAest,r,Fc,Fjvec,lightvel,Nc,Nsc);
+
+
 
 
 

@@ -18,6 +18,10 @@ function [w_j] = subspaceWeightsj(Rxx,Hj,Gj,gammaj,M,Nsc,Nc,N)
     %w_j=   Pjcomp_unwanted * Hj* inv(Hj'*Pjcomp_unwanted*Hj)* gammaj;
     Pjcomp_unwanted= eye(2*N*Nc*Nsc)- Es* (((Es)'*Es) \(Es)') ; 
     w_j=   Pjcomp_unwanted * Hj*( (Hj'*Pjcomp_unwanted*Hj) \ (gammaj));
+
+    %W sub = P unwanted c*H des est...
+% 54 /(H des est'*P unwanted c*H des est)*Gamma des est; % ...
+% [2*RaN*Nc x 1]
     
 
     disp('run');
