@@ -11,5 +11,5 @@ function[fi]= computef(len,vels,Fjvec,Fc,Tcs,lightvel,K)
              fi(start:stop,n)=store;
          end
      end
-     disp('cehc');
+     disp('check');
 end

@@ -4,7 +4,7 @@ addpath('.\Compute\');
 NoSymbs=200;
 M=5; %# users
 N_bar=16;
-Nsc=5;
+Nsc=1;
 Nc=31;
 Ts=0.1e-6;
 Tc=Ts*Nsc;
@@ -18,7 +18,7 @@ c=PNSeqGen();
 %% Generate user and MAI data
  load("bitstream.mat");
 % bits=bitstream(1,:);
-bits= bitstream(1,:); % round(rand(5,2*NoSymbs));
+bits= round(rand(1,2*NoSymbs));
 A= QPSKMod(bits,sqrt(2),deg2rad(43));
 ai1=Demux(A,width(A),Nsc);
 
@@ -39,6 +39,7 @@ ausers=ausers- real(mean(mean(ausers)));
 %[r,r_bar]=TxRxArr(lightvel,Fc,"50");
 N=length(r);
 [delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0);
+delays=round(delays/10);
 % find f and gamma
 f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -86,7 +87,7 @@ noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
 %% eqn 24
 G= computeG(gamma,K);
-Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise); %compute theoretical cov. matx
+Rxx_theor= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise);%compute theoretical cov. matx
 [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% Delay-Velocity cost function inputs
@@ -107,8 +108,8 @@ toc;
 [Pn,~]= findPn(Rxx_theor,M*Nsc);
 del_est=[140,110,30]; 
 vel_est=[20,66,120];
-%[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
-[cost1d]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
+[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
+%[cost1d]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
 Colours = {'red','g','blue'};
 figure;
 for k=1:K
@@ -120,37 +121,26 @@ xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation'); legend('sho
 DOAest= findMaxofPath(cost1d);
 hold off;
 %% Spatiotemporal beamformer weights
-j=1;
-Hj=H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
-Gj= G(:, (j-1)*K+1: j*K);
-gammaj= gamma(:,j);
-out=findWeights(Rxx_prac,Hj,Gj,gammaj,K,N,Nc,Nsc);
-weights= unitymag(out);
-total_weights= sum(weights,2);
-% for j=1:Nsc
-%     Hj= H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
-%     Gj= G(:, (j-1)*K+1: j*K);
-%     gammaj= gamma(:,j);
-%     w(:,j)= subspaceWeightsj(Rxx_prac,Hj,Gj,gammaj,M,Nsc,Nc,N);
-% end
-% toc;
-%% Doppler STAR vectors 
-hdoppstarvecs= zeros(Nc*Nsc*2*N*Nc*Nsc,360);
+tic;
+w=zeros(2*N*Nc*Nsc,Nsc);
+for j=1:Nsc
+    Hj= H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
+    Gj= G(:, (j-1)*K+1: j*K);
+    gammaj= gamma(:,j);
+    w(:,j)= subspaceWeightsj(Rxx_prac,Hj,Gj,gammaj,M,Nsc,Nc,N);
+end
+toc;
+wjtotal= sum(w,2);
+%% Doppler STAR vectors- case 1: UCA=9
+tic;
+hdoppstarvecs= zeros(Nc*Nsc*2*N*Nc*Nsc,360*Nsc);
 for delk= 0:Nc*Nsc-1
-    hdoppstar=DoppSTARmanifold((1:360),delk,VDops(1,1),J,Fjvec(1),Nsc,r,c(:,1));
-    hdoppstarvecs(delk*2*N*Nc*Nsc+1:(delk+1)*2*N*Nc*Nsc,1:360)=hdoppstar;
+    for j=1:Nsc
+            hdoppstar=DoppSTARmanifold((1:360)',delk,VDops(1,1),J,Fjvec(j),Nsc,r,c(:,1));
+            hdoppstarvecs(delk*2*N*Nc*Nsc+1:(delk+1)*2*N*Nc*Nsc,(j-1)*360+1: j*360)=hdoppstar;
+    end 
 end
-%% plot the pattern
-gain=zeros(Nc*Nsc,360);
-for delk=0:Nc*Nsc-1
-    gain(delk+1,1:360)= ctranspose(total_weights)* hdoppstarvecs( delk*2790+1: (delk+1)*2790, 1:360);
-end
-
-figure;
-surf((1:360),(0:Nc*Nsc-1),abs(gain),'FaceAlpha',1,'EdgeAlpha',0.5);
-xlabel('DOA(degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
-shading('interp');
-colormap('jet');
+toc;
 %% Doppler STAR vectors- case 2: UCA=50
 for delk= 0:Nc*Nsc-1
     hdoppstarvecs=zeros(2*N*Nc*Nsc,360*Nsc);

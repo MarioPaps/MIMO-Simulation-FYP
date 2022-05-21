@@ -147,10 +147,14 @@ for delk=0:Nc*Nsc-1
 end
 
 figure;
-surf((1:360),(0:Nc*Nsc-1),abs(gain),'FaceAlpha',1,'EdgeAlpha',0.5);
-xlabel('DOA(degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
+surf((1:360),(1:Nc*Nsc),abs(gain),'FaceAlpha',1,'EdgeAlpha',0.5);
+xlabel('DOA(degrees)'); ylabel('')
 shading('interp');
 colormap('jet');
+
+
+
+
 %% Doppler STAR vectors- case 2: UCA=50
 for delk= 0:Nc*Nsc-1
     hdoppstarvecs=zeros(2*N*Nc*Nsc,360*Nsc);

@@ -17,7 +17,8 @@ function[r,r_bar]=TxRxArr(lightvel,Fc,UCA)
         r= r*(lambda/2);
     else
          %define 500-element UCA or 50-element UCA
-        step= 360/500;
+        step= 360/50;
+        %step=360/9;
         lambda=lightvel/Fc;
         thetas= (0:step:360-step);
         radius= (lambda/4)/ (sind(step/2));
