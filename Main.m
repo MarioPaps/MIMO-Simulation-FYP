@@ -10,7 +10,7 @@ Ts=0.1e-6;
 Tc=Ts*Nsc;
 Tcs=Nc*Tc; 
 Fc=20e9;
-K=1; %3 paths per user
+K=3; %3 paths per user
 lightvel=3e8;
 Fjvec=((0:Nsc-1)*(1/Tc))';
 c=PNSeqGen();
@@ -44,11 +44,11 @@ ausers=ausers- real(mean(mean(ausers)));
 % mtot=[m1;m2;m3;m4;m5];
 % clear m1 m2 m3 m4 m5 
 %% Define channel parameters
-[r,r_bar]=TxRxArr(lightvel,Fc,"default");
+[r,r_bar]=TxRxArr(lightvel,Fc,9);
 N=length(r);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0);
-beta=real(beta);
-delays=round(delays/10);
+[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0,Nsc);
+%beta=real(beta);
+
 %find f and gamma
 f1j= computef(NoSymbs/Nsc,VDops(1,1:K),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(NoSymbs/Nsc,VDops(2,1:K),Fjvec,Fc,Tcs,lightvel,K);
@@ -63,7 +63,8 @@ gamma3= computegamma(beta(1:K,11:15),DODs(3,1:K),Fjvec,r_bar,K);
 gamma4= computegamma(beta(1:K,16:20),DODs(4,1:K),Fjvec,r_bar,K);
 gamma5= computegamma(beta(1:K,21:25),DODs(5,1:K),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5]; clear gamma1 gamma2 gamma3 gamma4 gamma5; 
-gamma= 0.1* ones(size(gamma));
+
+%gamma= 0.1* ones(size(gamma));
 % gamma= round(gamma,1,"significant");
 % gamma=real(gamma);
 G= computeG(gamma,K); %path power gain matrix
@@ -93,10 +94,11 @@ for i=1:M
         h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i));
         h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i));
         h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i));
-       % H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
-       H(row_start:row_end,col_start:col_end)=h1;
+        H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
+      % H(row_start:row_end,col_start:col_end)=h1;
     end
 end
+clear h1 h2 h3;
 %% find x-equation 17
 x=zeros(N*Next,L);
 % x=[];
@@ -132,10 +134,10 @@ colormap('jet');
 toc;
 %% DOA Cost Function
 [Pn,~]= findPn(Rxx_theor,M*Nsc);
-del_est=[14,11,3]; 
-vel_est=[20,66,120];
+del_est=delays(1,:); 
+vel_est=VDops(1,:);
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
-[cost1d]=experiment(del_est,vel_est, (1:360)', Fjvec,r,Pn,J,c(:,1),Nsc,K);
+[cost1d]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
 Colours = {'red','g','blue'};
 figure;
 for k=1:K
@@ -146,7 +148,6 @@ end
 xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation'); legend('show');
 DOAest= findMaxofPath(cost1d);
 hold off;
-
 %% gamma_kj ampl. estimation for one path
 k=1;
 lambda_min= min(eig(Rxx_prac));

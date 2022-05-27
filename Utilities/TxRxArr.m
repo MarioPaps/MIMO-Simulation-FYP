@@ -9,16 +9,14 @@ function[r,r_bar]=TxRxArr(lightvel,Fc,UCA)
     %if r is in [lambda/2], I multiply by (lambda/2) to give it [m] units
     r_bar=r_bar*(lambda/2); %convert to meters
 
-    if(UCA=="default")
+    if(UCA==9)
         rx=[1.43 0.90 -0.05 -0.98 -1.45 -1.24 -0.45 0.55 1.29]';
         ry=[0.30 1.15 1.46 1.09 0.20 -0.77 -1.39 -1.36 -0.69]';
         rz=zeros(length(rx),1);
         r=[rx,ry,rz];
         r= r*(lambda/2);
     else
-         %define 500-element UCA or 50-element UCA
-        step= 360/50;
-        %step=360/9;
+        step=360/UCA;
         lambda=lightvel/Fc;
         thetas= (0:step:360-step);
         radius= (lambda/4)/ (sind(step/2));

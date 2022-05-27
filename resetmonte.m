@@ -1,5 +1,6 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
+addpath('.\1_MC Results\');
 %Define constants
 NoSymbs=1000;
 M=4; %# users
@@ -14,8 +15,8 @@ Fc=20e9;
 K=3; %3 paths per user
 lightvel=3e8;
 Fjvec=((0:Nsc-1)*(1/Tc))';
-%% Generate user and MAI data
 c=PNSeqGen();
+%% Generate user and MAI data
 bits= round(rand(1,2*NoSymbs)); %bitstream(1,:); % ;
 A= QPSKMod(bits,sqrt(2),deg2rad(43));
 ai1=Demux(A,width(A),Nsc);
@@ -43,13 +44,13 @@ ausers=ausers- real(mean(mean(ausers)));
 % mtot=[m1;m2;m3;m4;m5];
 % clear m1 m2 m3 m4 m5 
 %% Define channel parameters
-[r,r_bar]=TxRxArr(lightvel,Fc);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0);
+[r,r_bar]=TxRxArr(lightvel,Fc,9);
+[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0,Nsc);
 %find f and gamma
-f1j= computef(ai1,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
-f2j= computef(ai1,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
-f3j= computef(ai1,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
-f4j= computef(ai1,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
+f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
+f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
+f3j= computef(NoSymbs/Nsc,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
+f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
 
 f=[f1j,f2j,f3j,f4j];
 gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
@@ -67,9 +68,9 @@ for i=1:M
         row_end= i*N*Next;
         col_start= (j-1)*K+1;
         col_end= j*K;
-        h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i));
-        h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i));
-        h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i));
+        h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i),"st");
+        h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i),"st");
+        h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i),"st");
         H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
     end
 end
@@ -79,7 +80,6 @@ L=200;
 xaxis= L*SNR;
 SNR_db=10.*log10(SNR);
 numtrials=100;
-RMSEgamma= zeros(numtrials,length(SNR));
 RMSEDOA= zeros(numtrials,length(SNR));
 %load("x.mat");
 %% obtain noiseless x
@@ -90,7 +90,7 @@ end
 %% obtain x for every trial and SNR 
 x_noise= cell(numtrials,length(SNR));
 Pnoise= 1./SNR;
-for trial=1:numtrials
+for trial=1:10
     for ind=1:length(SNR)
         rng shuffle
         noise= sqrt(Pnoise(ind)/2)* (randn(size(x))+1i*randn(size(x)));
@@ -138,21 +138,9 @@ end
      vel_est=[vel_est,uk_est];
  end
  toc;
-%  %% precompute Pn matrices
-%  Pn_mat=cell(numtrials,length(SNR));
-%  for trial=1:numtrials
-%      for ind=1:length(SNR)
-%         xcurr= x_noise{trial,ind};
-%         Rxx_prac= (1/L)* (xcurr) * ctranspose(xcurr);
-%         [Pn,lambda_min]= findPn(Rxx_prac,M*Nsc);
-%         Pn_mat{trial,ind}= Pn;
-%      end
-% 
-% 
-%  end
  %% obtain DOA estimates for every SNR
 tic;
-%load("vels100trials.mat");
+load("vels100trials.mat");
 init=0.01;
 angles=[60,200,280]; %predicted values
 theta=[];
@@ -161,7 +149,7 @@ for k=1:K
 end
 
  for trial=1:1
-    for ind=1:3
+    for ind=6:length(SNR)
         del_est=[140,110,30];
         %uk_est= [20,60,120];
         uk_est= vel_est(ind, (trial-1)*K+1: trial*K);

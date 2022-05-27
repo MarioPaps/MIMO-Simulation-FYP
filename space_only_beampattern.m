@@ -26,7 +26,24 @@ function[space_gain]= space_only_beampattern(DOAest,r,Fc,Fjvec,lightvel,Nc,Nsc)
         xlabel('DOA (degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
         shading('interp');
         colormap('jet');
-   end
+    end
+
+    %compute the 3 path weights, normalise, add them up and do the surf
+    %plot
+    %space_gain=zeros(Nc*Nsc,360);
+%     w=computeManifoldRx(DOAest,0,r,Fc,Fjvec(1),lightvel);
+%     w_norm= unitymag(w);
+%     w_tot= sum(w_norm,2,'omitnan');
+%     for delk=0:Nc*Nsc-1
+%             pos=(delk+1);
+%             space_gain(pos,1:360)=w_tot'*computeManifoldRx((1:360)',0,r,Fc,Fjvec(1),lightvel);
+%     end
+%     figure;
+%     surf((1:360),(0:Nc*Nsc-1),abs(space_gain),'FaceAlpha',1,'EdgeAlpha',0.5);
+%     xlabel('DOA (degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
+%     shading('interp');
+%     colormap('jet');
+
 
 end
 

@@ -1,8 +1,7 @@
-%This function generates
-%beta coefficients for all users and subcarriers
+%This function generates beta coefficients for all users and subcarriers,
 %Doppler velocities for all users and paths
 %delays,DODs,DOAs  for  all users and paths
-function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen(set_same_vel,set_same_DOA)
+function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen(set_same_vel,set_same_DOA,Nsc)
     %declare constants
     K=3;
     M=5;
@@ -23,26 +22,8 @@ function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen(set_same_vel,set_same_DO
 %     betas5=[0.25 0.18 0.14; 0.19 0.24 0.03; 0.05 0.03 0.10; 0.12 0.14 0.11; 0.17 0.12 0.15];
 %     betas5=betas5.';
 
-
-
     %try betas
-%     betas1=[0.52*exp(-1i*deg2rad(78)) 0.75 0.67; 0.6*exp(-1i*deg2rad(32)) 0.88 0.61; 0.42*exp(-1i*deg2rad(64)) 0.67 0.71; 0.49*exp(-1i*deg2rad(-40)) 0.58 0.74; 0.52*exp(-1i*deg2rad(-75)) 0.48 0.78];
-%     betas1=betas1.';
-%     betas2=[0.1 0.11 0.12; 0.23 0.01 0.06; 0.08 0.10 0.15; 0.12 0.23 0.26; 0.27 0.23 0.28];
-%     betas2=betas2.';
-%     betas3=[0.03 0.08 0.04; 0.12 0.14 0.04; 0.17 0.24 0.29; 0.18 0.22 0.27; 0.21 0.24 0.29];
-%     betas3=betas3.';
-%     betas4=[0.02 0.21 0.07; 0.14 0.18 0.21; 0.25 0.22 0.19; 0.20 0.24 0.31; 0.32 0.35 0.39];
-%     betas4=betas4.';
-%     betas5=[0.25 0.18 0.14; 0.19 0.24 0.03; 0.05 0.03 0.10; 0.12 0.14 0.11; 0.17 0.12 0.15];
-%     betas5=betas5.';
-
-    %betas that worked 27 Feb
-%      betas1=[0.82*exp(1i*deg2rad(78)) 0.75 0.67; 0.9*exp(1i*deg2rad(32)) 0.88 0.61; 0.82*exp(1i*deg2rad(64)) 0.67 0.71; 0.84*exp(1i*deg2rad(-40)) 0.88 0.74; 0.87*exp(1i*deg2rad(-75)) 0.84 0.78];
-%     betas1=betas1';
-
-%     %betas for Monte Carlo simulation
-    betas1=[0.43*exp(1i*deg2rad(78)) 0.15 0.37; 0.42*exp(1i*deg2rad(32)) 0.49 0.5; 0.42*exp(1i*deg2rad(64)) 0.37 0.48; 0.48*exp(1i*deg2rad(-40)) 0.29 0.36; 0.36*exp(1i*deg2rad(-75)) 0.35 0.26];
+    betas1=[0.52*exp(-1i*deg2rad(78)) 0.75 0.67; 0.6*exp(-1i*deg2rad(32)) 0.88 0.61; 0.42*exp(-1i*deg2rad(64)) 0.67 0.71; 0.49*exp(-1i*deg2rad(-40)) 0.58 0.74; 0.52*exp(-1i*deg2rad(-75)) 0.48 0.78];
     betas1=betas1.';
     betas2=[0.1 0.11 0.12; 0.23 0.01 0.06; 0.08 0.10 0.15; 0.12 0.23 0.26; 0.27 0.23 0.28];
     betas2=betas2.';
@@ -53,13 +34,23 @@ function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen(set_same_vel,set_same_DO
     betas5=[0.25 0.18 0.14; 0.19 0.24 0.03; 0.05 0.03 0.10; 0.12 0.14 0.11; 0.17 0.12 0.15];
     betas5=betas5.';
 
+    %betas that worked 27 Feb
+%      betas1=[0.82*exp(1i*deg2rad(78)) 0.75 0.67; 0.9*exp(1i*deg2rad(32)) 0.88 0.61; 0.82*exp(1i*deg2rad(64)) 0.67 0.71; 0.84*exp(1i*deg2rad(-40)) 0.88 0.74; 0.87*exp(1i*deg2rad(-75)) 0.84 0.78];
+%     betas1=betas1';
+
+%     %betas for Monte Carlo simulation-default betas
+%     betas1=[0.43*exp(1i*deg2rad(78)) 0.15 0.37; 0.42*exp(1i*deg2rad(32)) 0.49 0.5; 0.42*exp(1i*deg2rad(64)) 0.37 0.48; 0.48*exp(1i*deg2rad(-40)) 0.29 0.36; 0.36*exp(1i*deg2rad(-75)) 0.35 0.26];
+%     betas1=betas1.';
+%     betas2=[0.1 0.11 0.12; 0.23 0.01 0.06; 0.08 0.10 0.15; 0.12 0.23 0.26; 0.27 0.23 0.28];
+%     betas2=betas2.';
+%     betas3=[0.03 0.08 0.04; 0.12 0.14 0.04; 0.17 0.24 0.29; 0.18 0.22 0.27; 0.21 0.24 0.29];
+%     betas3=betas3.';
+%     betas4=[0.02 0.21 0.07; 0.14 0.18 0.21; 0.25 0.22 0.19; 0.20 0.24 0.31; 0.32 0.35 0.39];
+%     betas4=betas4.';
+%     betas5=[0.25 0.18 0.14; 0.19 0.24 0.03; 0.05 0.03 0.10; 0.12 0.14 0.11; 0.17 0.12 0.15];
+%     betas5=betas5.';
+
     %only real betas
-
-
-
-
-
-
 %      betas1=[0.82,0.76,0.8,0.2,0.8*exp(-1i*deg2rad(65));
 %             0.75, 0.32,0.65,0.88, 0.54; 
 %             0.67,0.75, 0.6,0.49,0.46];
@@ -98,18 +89,17 @@ function[delays,beta,DODs,DOAs,vels]= Channel_Param_Gen(set_same_vel,set_same_DO
 
     delays= zeros(M,K);
     delays(1,:)= [140 110 30];
-    temp_del=[20,45,60; 90,50,70; 30,55,80; 40,85,100];
-    delays(2:end,:)=temp_del;
-
+    delays(2:end,:)=[20,45,60; 90,50,70; 30,55,80; 40,85,100];
+    if(Nsc<5)
+        delays=floor(delays/10);
+    end
     DODs= zeros(M,K);
     DODs(1,:)= [35 40  28];
     DODs(2:end,:)=[87 18 137; 110 172 148; 75 83 85; 97 12 81];
    
-
     DOAs= zeros(M,K);
     DOAs(1,:)= [60 200 280];
     DOAs(2:end,:)=[13 76 98; 83 93 102; 115 32 83; 39 73 87];
-    
     
     vels= zeros(M,K);
     vels(1,:)= [20 66 120];

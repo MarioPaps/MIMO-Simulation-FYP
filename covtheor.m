@@ -1,13 +1,11 @@
 %the function computes the theoretical covariance matrix in equation 24
-function[Rxx_theor]= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise)
+function[Rxx_theor,Rdes,Rmai,Risi,Rnn]= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise)
     user=1;
     Next=2*Nc*Nsc;
+    J = [zeros(1,2*Nc*Nsc-1) 0; eye(2*Nc*Nsc-1), zeros(2*Nc*Nsc-1,1)];
     Rdes=zeros(N*Next,N*Next);
     Risi=zeros(N*Next,N*Next);
     Rmai= zeros(N*Next,N*Next);
-%     Rdes=sparse(N*Next,N*Next);
-%     Risi=sparse(N*Next,N*Next);
-%     Rmai=sparse(N*Next,N*Next);
     for j=1:Nsc
         row_start=(user-1)*N*Next+1;
         row_end= user*N*Next;
@@ -39,8 +37,7 @@ function[Rxx_theor]= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise)
 
         end
     end
-    Rnn= Pnoise*eye(N*Next); %R_nn
-%    Rnn= Pnoise* speye(N*Next);
+    Rnn= Pnoise*speye(N*Next); %R_nn
     Rxx_theor=Rdes+Risi+Rmai+Rnn; %equation 24
 end
 

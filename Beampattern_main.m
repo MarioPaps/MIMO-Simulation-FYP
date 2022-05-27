@@ -1,5 +1,6 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
+addpath('.\Beampattern_files\');
 %Define constants
 NoSymbs=200;
 M=5; %# users
@@ -27,7 +28,7 @@ MAIres=cell(1,M-1);
 rng default
 for user=2:M
     bitsMAI= round(rand(1,2*NoSymbs));
-    MAI(user-1,:)= QPSKMod(bitsMAI,0.2,deg2rad(0));
+    MAI(user-1,:)= QPSKMod(bitsMAI,0.2,deg2rad(10));
     MAIres{user-1}=Demux(MAI(user-1,:),width(A),Nsc);
 end
 
@@ -35,10 +36,10 @@ ausers=[ai1, cell2mat(MAIres)];
 ausers= unitymag(ausers); %every element with unity magnitude
 ausers=ausers- real(mean(mean(ausers)));
 %% Define channel parameters
-[r,r_bar]=TxRxArr(lightvel,Fc,"default");
+[r,r_bar]=TxRxArr(lightvel,Fc,9);
 %[r,r_bar]=TxRxArr(lightvel,Fc,"50");
 N=length(r);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0);
+[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0,Nsc);
 % find f and gamma
 f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -54,6 +55,7 @@ gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
 gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
 gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
+G= computeG(gamma,K);
 clear gamma1 gamma2 gamma3 gamma4 gamma5; 
 
 SNR_abs= 10^(20/10);
@@ -70,12 +72,13 @@ for i=1:M
         row_end= i*N*Next;
         col_start= (j-1)*K+1;
         col_end= j*K;
-        h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i));
-        h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i));
-        h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i));
+        h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i),"st");
+        h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i),"st");
+        h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i),"st");
         H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
     end
 end
+clear h1 h2 h3;
 %% find x-eqn 17
 x=zeros(N*Next,L);
 for n=1:L
@@ -85,9 +88,8 @@ end
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
 %% eqn 24
-G= computeG(gamma,K);
-Rxx_theor= covtheor(H,G,J,N,Nc,Nsc,M,Pnoise); %compute theoretical cov. matx
-[Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
+[Rxx_theor,~,~,~,~]= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise); %compute theoretical cov. matx#
+% [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% Delay-Velocity cost function inputs
 [akj,Fkj]=findvecs(Fjvec,(1:140),c(:,1),Nc,Nsc,Ts);
@@ -108,7 +110,7 @@ toc;
 del_est=[140,110,30]; 
 vel_est=[20,66,120];
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
-[cost1d]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
+[cost1d,DOAest]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
 Colours = {'red','g','blue'};
 figure;
 for k=1:K
@@ -117,7 +119,6 @@ for k=1:K
     hold on;
 end
 xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation'); legend('show');
-DOAest= findMaxofPath(cost1d);
 hold off;
 %% Spatiotemporal beamformer weights
 j=1;
@@ -126,53 +127,52 @@ Gj= G(:, (j-1)*K+1: j*K);
 gammaj= gamma(:,j);
 out=findWeights(Rxx_prac,Hj,Gj,gammaj,K,N,Nc,Nsc);
 weights= unitymag(out);
-total_weights= sum(weights,2);
-% for j=1:Nsc
-%     Hj= H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
-%     Gj= G(:, (j-1)*K+1: j*K);
-%     gammaj= gamma(:,j);
-%     w(:,j)= subspaceWeightsj(Rxx_prac,Hj,Gj,gammaj,M,Nsc,Nc,N);
-% end
-% toc;
+total_weights= sum(weights,2,'omitnan');
+%% Spatiotemporal beamformer weights
+% j=1;
+% Hj=H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
+% Gj= G(:, (j-1)*K+1: j*K);
+% gammaj= gamma(:,j);
+% w= subspaceWeightsj(Rxx_prac,Hj,Gj,gammaj,M,Nsc,Nc,N);
+% w=unitymag(w);
 %% Doppler STAR vectors 
 hdoppstarvecs= zeros(Nc*Nsc*2*N*Nc*Nsc,360);
 for delk= 0:Nc*Nsc-1
-    hdoppstar=DoppSTARmanifold((1:360),delk,VDops(1,1),J,Fjvec(1),Nsc,r,c(:,1));
-    hdoppstarvecs(delk*2*N*Nc*Nsc+1:(delk+1)*2*N*Nc*Nsc,1:360)=hdoppstar;
+    hdoppstarvec=DoppSTARmanifold((1:360),delk,VDops(1,1),J,Fjvec(1),Nsc,r,c(:,1));
+    hdoppstarvecs(delk*2*N*Nc*Nsc+1:(delk+1)*2*N*Nc*Nsc,1:360)=hdoppstarvec;
 end
-%% plot the pattern
+%% Plot the beampattern for UCA 9 elements
 gain=zeros(Nc*Nsc,360);
 for delk=0:Nc*Nsc-1
-    gain(delk+1,1:360)= ctranspose(total_weights)* hdoppstarvecs( delk*2790+1: (delk+1)*2790, 1:360);
+    gain(delk+1,1:360)=abs( ctranspose(total_weights)* hdoppstarvecs( delk*2*N*Nc*Nsc+1: (delk+1)*2*N*Nc*Nsc,1:360) );
 end
 
+% gain=( (gain-min(min(gain)))/(max(max(gain))-min(min(gain))) ) *N*Nc*Nsc;
 figure;
 surf((1:360),(0:Nc*Nsc-1),abs(gain),'FaceAlpha',1,'EdgeAlpha',0.5);
 xlabel('DOA(degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
 shading('interp');
 colormap('jet');
-%% Doppler STAR vectors- case 2: UCA=50
+%% Doppler STAR vectors- case 2: large UCAs
 for delk= 0:Nc*Nsc-1
-    hdoppstarvecs=zeros(2*N*Nc*Nsc,360*Nsc);
-    for j=1:Nsc
-            hdoppstar=DoppSTARmanifold((1:360)',delk,VDops(1,1),J,Fjvec(j),Nsc,r,c(:,1));
-            hdoppstarvecs(:,(j-1)*360+1: j*360)=hdoppstar;
-    end 
+    hdoppstarvec=DoppSTARmanifold((1:360),delk,VDops(1,1),J,Fjvec(1),Nsc,r,c(:,1));
     savdir='C:\Users\mario\Box\MEng_2021_Marios_Papadopoulos\Matlab\MIMO-SimulationNew\Beampattern_files';
-    filename= strcat('hdoppstarvecs_delay_',num2str(delk),'.mat');
-    save(fullfile(savdir,filename),"hdoppstarvecs");
+    savdir= '.\Beampattern_files\';
+    filename= strcat('hdoppstarvec',num2str(N),'_delay_',num2str(delk),'.mat');
+    save(fullfile(savdir,filename),"hdoppstarvec");
 end
-%% approach 1->case 2: UCA=50
-gain50=[];
+%% Plot large UCA
+large_gain=zeros(Nc*Nsc,360);
 for delk=0:Nc*Nsc-1
-    loadfile=strcat('Beampattern_files\hdoppstarvecs_delay_',num2str(delk),'.mat');
-    load(loadfile);
-    deldoa_sum=sum(reshape(hdoppstarvecs,height(hdoppstarvecs),360,[]),3);
-    gain50(delk+1,1:360)= ctranspose(wjtotal)* deldoa_sum;
+    loadfile=strcat('.\Beampattern_files\hdoppstarvec',num2str(N),'_delay_',num2str(delk),'.mat');
+  % loadfile=strcat('hdoppstarvec',num2str(N),'delay_',num2str(delk),'.mat');
+   load(loadfile);
+   large_gain(delk+1,1:360)=abs(ctranspose(total_weights)*...
+        hdoppstarvec);
 end
 
 figure;
-surf((1:360),(1:Nc*Nsc),abs(gain50),'FaceAlpha',1,'EdgeAlpha',0.5);
+surf((1:360),(0:Nc*Nsc-1),abs(large_gain),'FaceAlpha',1,'EdgeAlpha',0.5);
 shading('interp');
 colormap('jet');
 %% approach 1 -> sum across subcarriers
@@ -210,7 +210,8 @@ a_estim= w'*x(:,1);
 %% obtaining equations 47-49
 [w_RAKE,w_dec]=weights4749(H,gamma,K,N,Nc,Nsc);
 w_RAKE_total= sum(w_RAKE,2);
-
+%% 
+[out1,out2]= matrix_maxk(abs(gain),3);
 
 
 
