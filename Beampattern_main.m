@@ -1,11 +1,11 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
 addpath('.\Beampattern_files\');
-%Define constants
-NoSymbs=200;
-M=5; %# users
+M=5; %# users   
 N_bar=16;
-Nsc=5;
+L=40; %number of snaphots of x[n]
+Nsc=1;
+NoSymbs= L*Nsc;
 Nc=31;
 Ts=0.1e-6;
 Tc=Ts*Nsc;
@@ -39,7 +39,8 @@ ausers=ausers- real(mean(mean(ausers)));
 [r,r_bar]=TxRxArr(lightvel,Fc,9);
 %[r,r_bar]=TxRxArr(lightvel,Fc,"50");
 N=length(r);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0,Nsc);
+%[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0,Nsc);
+[delays,beta,DODs,DOAs,VDops]=ChannelParam(0,0,0,Nsc);
 % find f and gamma
 f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -48,15 +49,15 @@ f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
 f5j= computef(NoSymbs/Nsc,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 
 f=[f1j,f2j,f3j,f4j,f5j];
-clear f1j f2j f3j f4j f5j;
-gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
-gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar,K);
-gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
-gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
-gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
+%clear f1j f2j f3j f4j f5j;
+gamma1= computegamma(beta(:,1:Nsc),DODs(1,:),Fjvec,r_bar,K);
+gamma2= computegamma(beta(:,Nsc+1:2*Nsc),DODs(2,:),Fjvec,r_bar,K);
+gamma3= computegamma(beta(:,2*Nsc+1:3*Nsc),DODs(3,:),Fjvec,r_bar,K);
+gamma4= computegamma(beta(:,3*Nsc+1:4*Nsc),DODs(4,:),Fjvec,r_bar,K);
+gamma5= computegamma(beta(:,4*Nsc+1:5*Nsc),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
 G= computeG(gamma,K);
-clear gamma1 gamma2 gamma3 gamma4 gamma5; 
+%clear gamma1 gamma2 gamma3 gamma4 gamma5; 
 
 SNR_abs= 10^(20/10);
 PTx= 1;
@@ -72,9 +73,9 @@ for i=1:M
         row_end= i*N*Next;
         col_start= (j-1)*K+1;
         col_end= j*K;
-        h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i),"st");
-        h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i),"st");
-        h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i),"st");
+        h1= DoppSTARmanifold(DOAs(i,1),delays(i,1),VDops(i,1),J,Fjvec(j),Nsc,r,c(:,i));
+        h2= DoppSTARmanifold(DOAs(i,2),delays(i,2),VDops(i,2),J,Fjvec(j),Nsc,r,c(:,i));
+        h3= DoppSTARmanifold(DOAs(i,3),delays(i,3),VDops(i,3),J,Fjvec(j),Nsc,r,c(:,i));
         H(row_start:row_end,col_start:col_end)=[h1,h2,h3];
     end
 end
@@ -88,7 +89,7 @@ end
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
 %% eqn 24
-[Rxx_theor,~,~,~,~]= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise); %compute theoretical cov. matx#
+[Rxx_theor,~,~,~,~]= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise); %compute theoretical cov. matx#
 % [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% Delay-Velocity cost function inputs
@@ -108,7 +109,7 @@ toc;
 %% DOA cost function
 [Pn,~]= findPn(Rxx_theor,M*Nsc);
 del_est=[140,110,30]; 
-vel_est=[20,66,120];
+vel_est=VDops(1,:);
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
 [cost1d,DOAest]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
 Colours = {'red','g','blue'};

@@ -28,6 +28,8 @@ f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
 f5j= computef(NoSymbs/Nsc,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 f=[f1j,f2j,f3j,f4j,f5j];
 clear f1j f2j f3j f4j f5j;
+
+
 gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
 gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar,K);
 gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
@@ -133,3 +135,5 @@ for trial=1:1
 end
 %% 
 stem(mean(doppstar_result(1:50,:)));
+%% generate varying betas
+

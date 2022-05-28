@@ -42,7 +42,7 @@ gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
 gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
 gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
-clear gamma1 gamma2 gamma3 gamma4 gamma5; 
+% clear gamma1 gamma2 gamma3 gamma4 gamma5; 
 
 SNR_abs= 10^(20/10);
 Pnoise= abs(1/SNR_abs);

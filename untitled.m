@@ -53,6 +53,26 @@ stem(ress,'o','LineStyle','none');
 s=ones(9,3);
 sb= 2*ones(3,1);
 res= s .* sb'
+%% betas randomly
+R=0.5;
+re= sqrt((R-0).*randn(1,10)+0).* cos(2*pi*rand(1,10));
+re_abs= abs(re);
+im= sqrt((R-0).*randn(1,10)+0).* sin(2*pi*rand(1,10));
+im_abs= abs(im);
+
+cond=1;
+while(cond==1)
+    indices= find(re_abs>R/2);
+    if(isempty(indices))
+        cond=2;
+        break;
+    end
+    re(indices)=sqrt((R-0).*randn(1,length(indices))+0).* cos(2*pi*rand(1,length(indices)));
+end
 
 
-
+% beta= re+1i*im;
+% norm(beta)
+%% 
+t=[3,4,5];
+ee= find(t<2)

@@ -1,5 +1,5 @@
 %Generate MAI of a given power based on the NFR levels provided
-function [MAI,MAI_nfr] = MAIfromNFR(A,NFR,M,Nosymbs)
+function [MAI,MAI_nfr,MAI_powers] = MAIfromNFR(A,NFR,M,Nosymbs)
     
     %NFR= mean(MAI powers)/ desired user power
     userpower= (1/length(A))*A*ctranspose(A);
