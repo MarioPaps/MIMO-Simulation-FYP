@@ -4,7 +4,7 @@ addpath('.\Compute\');
 M=5; %# users   
 N_bar=16;
 L=40; %number of snaphots of x[n]
-Nsc=5;
+Nsc=1;
 NoSymbs= L*Nsc;
 Nc=31;
 Ts=0.1e-6;
@@ -20,7 +20,7 @@ NFR= 10.^((0:10:60)./10); %NFR levels
 %% transmitted signal generation
 bits=round(rand(1,2*NoSymbs));
 A= QPSKMod(bits,1,deg2rad(43)); 
-MAI= MAIfromNFR(A,NFR(1),M,NoSymbs);
+[MAI,MAI_nfr,MAI_powers]= MAIfromNFR(A,NFR(3),M,NoSymbs);
 ai1= Demux(A,width(A),Nsc);
 MAIres=cell(1,M-1);
 for user=2:M
@@ -31,23 +31,26 @@ ausers= unitymag(ausers); %every element with unity magnitude
 ausers=ausers- real(mean(mean(ausers)));
 %% Define channel parameters
 [r,r_bar]=TxRxArr(lightvel,Fc,9);
-N=length(r);
-[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0,Nsc);
-
+N=length(r); 
+[delays,~,DODs,DOAs,VDops]=ChannelParam(0,0,0,Nsc);
+beta_nfr= betas_NFR(MAI_powers,M,Nsc,K);
+beta= cell2mat(beta_nfr);
+% beta_MAI= betas_NFR(MAI_powers,M,Nsc,K);
+% beta(:,Nsc+1:end)= beta_MAI;
 % find f and gamma
-f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
-f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
-f3j= computef(NoSymbs/Nsc,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
-f4j= computef(NoSymbs/Nsc,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
-f5j= computef(NoSymbs/Nsc,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
+f1j= computef(L,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
+f2j= computef(L,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
+f3j= computef(L,VDops(3,:),Fjvec,Fc,Tcs,lightvel,K);
+f4j= computef(L,VDops(4,:),Fjvec,Fc,Tcs,lightvel,K);
+f5j= computef(L,VDops(5,:),Fjvec,Fc,Tcs,lightvel,K);
 
 f=[f1j,f2j,f3j,f4j,f5j];
 clear f1j f2j f3j f4j f5j;
-gamma1= computegamma(beta(:,1:5),DODs(1,:),Fjvec,r_bar,K);
-gamma2= computegamma(beta(:,6:10),DODs(2,:),Fjvec,r_bar,K);
-gamma3= computegamma(beta(:,11:15),DODs(3,:),Fjvec,r_bar,K);
-gamma4= computegamma(beta(:,16:20),DODs(4,:),Fjvec,r_bar,K);
-gamma5= computegamma(beta(:,21:25),DODs(5,:),Fjvec,r_bar,K);
+gamma1= computegamma(beta(:,1:Nsc),DODs(1,:),Fjvec,r_bar,K);
+gamma2= computegamma(beta(:,Nsc+1:2*Nsc),DODs(2,:),Fjvec,r_bar,K);
+gamma3= computegamma(beta(:,2*Nsc+1:3*Nsc),DODs(3,:),Fjvec,r_bar,K);
+gamma4= computegamma(beta(:,3*Nsc+1:4*Nsc),DODs(4,:),Fjvec,r_bar,K);
+gamma5= computegamma(beta(:,4*Nsc+1:5*Nsc),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
 G= computeG(gamma,K);
 clear gamma1 gamma2 gamma3 gamma4 gamma5; 
@@ -118,8 +121,12 @@ doppstar_weights= sum(weights,2,'omitnan');
 %LEAVE SPACE FOR w_RAKE (need to be debugged)
 [w_rake,~]= weights4749(H,gamma,K,N,Nc,Nsc);
 %% SNIRout evaluation
-SNIRout_doppstar= (ctranspose(doppstar_weights)*Rdes* (doppstar_weights))/ (ctranspose(doppstar_weights)*(Rnn)* (doppstar_weights))
-SNIRout_rake=(ctranspose(w_rake)*Rdes* (w_rake))/ (ctranspose(w_rake)*(Risi+Rmai+Rnn)* (w_rake))
+SNIRout_doppstar= (ctranspose(doppstar_weights)*Rdes* (doppstar_weights))/ (ctranspose(doppstar_weights)*(Rnn)* (doppstar_weights));
+SNIRout_rake=(ctranspose(w_rake)*Rdes* (w_rake))/ (ctranspose(w_rake)*(Risi+Rmai+Rnn)* (w_rake));
 10*log10(SNIRout_doppstar)
 10*log10(SNIRout_rake)
+%% 
+rakeout=[6,-3,-13,-23,-33,-43,-53];
+plot(rakeout+14,'-o');
+
 

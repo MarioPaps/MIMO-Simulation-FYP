@@ -10,7 +10,8 @@ function [musicfn] = MUSIC_cost(Rxx,array,theta,Fjvec,M,Fc)
     Pn= eye(size(Ps))-Ps;
 
     lightvel=3e8;
-    S= computeManifoldRx(theta.',0,array,Fc,Fjvec(1),lightvel);
+    %S= computeManifoldRx(theta.',0,array,Fc,Fjvec(1),lightvel);
+    S=spv(array,directions);
     musicfn=diag(S'*Pn*S);
     musicfn= 1./abs(musicfn);
 

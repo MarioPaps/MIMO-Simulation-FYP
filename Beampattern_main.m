@@ -4,7 +4,7 @@ addpath('.\Beampattern_files\');
 M=5; %# users   
 N_bar=16;
 L=40; %number of snaphots of x[n]
-Nsc=1;
+Nsc=5;
 NoSymbs= L*Nsc;
 Nc=31;
 Ts=0.1e-6;

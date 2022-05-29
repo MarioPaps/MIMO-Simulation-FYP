@@ -51,11 +51,12 @@ x=zeros(N,L);
 for n=1:L
     x(:,n)=findXspace(ausers,gamma,DOAs,r,Fjvec,n,L,M,K,Fc);
 end
-%% plot MUSIC spectrum to check correctness
+x=x+sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 Rxx= (1/width(x))*x*ctranspose(x);
+%% plot MUSIC spectrum to check correctness
 musicout= MUSIC_cost(Rxx,r,(1:360),Fjvec,M,Fc);
 figure;
-plot((1:360),10*log10(abs(musicout)));
+plot((1:360),20*log10(abs(musicout)));
 %% weights computation
 space_weights=findSubWeightsSpace(Rxx,DOAs(1,:),gamma,r,Fjvec,Fc);
 space_weights=unitymag(space_weights);
