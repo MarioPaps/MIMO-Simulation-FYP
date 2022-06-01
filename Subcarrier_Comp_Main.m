@@ -4,7 +4,7 @@ addpath('.\Beampattern_files\');
 M=5; %# users   
 N_bar=16;
 L=40; %number of snaphots of x[n]
-Nsc=1;
+Nsc=2;
 NoSymbs= L*Nsc;
 Nc=31;
 Ts=0.1e-6;
@@ -36,7 +36,7 @@ ausers=ausers- real(mean(mean(ausers)));
 %[r,r_bar]=TxRxArr(lightvel,Fc,"50");
 N=length(r);
 %[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0,Nsc);
-[delays,beta,DODs,DOAs,VDops]=ChannelParam(0,0,0,Nsc);
+[delays,beta,DODs,DOAs,VDops]=ChannelParam(0,0,1,Nsc);
 % find f and gamma
 f1j= computef(NoSymbs/Nsc,VDops(1,:),Fjvec,Fc,Tcs,lightvel,K);
 f2j= computef(NoSymbs/Nsc,VDops(2,:),Fjvec,Fc,Tcs,lightvel,K);
@@ -112,5 +112,6 @@ out=findWeights(Rxx_prac,Hj,Gj,gammaj,K,N,Nc,Nsc);
 weights= unitymag(out);
 doppstar_weights= sum(weights,2,'omitnan');
 %% 
+ctranspose(doppstar_weights)*(Rmai+Risi+Rnn)* (doppstar_weights)
 SNIRout_doppstar= (ctranspose(doppstar_weights)*Rdes* (doppstar_weights))/ (ctranspose(doppstar_weights)*(Rnn)* (doppstar_weights));
 10*log10(SNIRout_doppstar)

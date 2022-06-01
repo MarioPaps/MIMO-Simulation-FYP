@@ -1,18 +1,23 @@
 %output beta for MAI users for given NFR level
 function [beta_NFR] = betas_NFR(MAI_powers,M,Nsc,K)
     
-    beta_des= 0.1*ones(K,Nsc); %desired user betas
+    beta_des= 0.75*ones(K,Nsc); %desired user betas
+    %beta_des= 10e-7 *ones(K,Nsc);
     beta_MAI=zeros(K,(M-1)*Nsc,length(MAI_powers));
     beta_NFR=cell(1,length(MAI_powers));
     beta_mag=linspace(0.2,1,12);
 
     for ind=1:length(MAI_powers)
         if(ind==1)
-            beta_MAI(:,:,ind)= reshape(repelem(beta_des,M-1),K,[]);
+            %beta_MAI(:,:,ind)= reshape(repelem(beta_des,M-1),K,[]);
             beta_MAI(:,:,ind)=sqrt(MAI_powers(ind));
+
+           % beta_MAI(:,:,ind)= MAI_powers(ind)*beta_des(1,1);
         else
             beta_MAI(:,:,ind)= beta_mag(ind-1);
             beta_MAI(:,:,ind)=sqrt(MAI_powers(ind));
+
+            %beta_MAI(:,:,ind)= MAI_powers(ind)*beta_des(1,1);
         end
         beta_NFR{ind}= [beta_des,beta_MAI(:,:,ind)];
     end

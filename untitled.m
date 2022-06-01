@@ -77,4 +77,12 @@ end
 t=[3,4,5];
 ee= find(t<2)
 %% 
+M=9;
+N=9;
+X = ones(M,N);
+[M,N] = size(X);
+Xcols = reshape(X,M,1,N);
+Xrows = reshape(X,1,M,N);
+result = bsxfun(@times,Xcols,Xrows)
+%% 
 

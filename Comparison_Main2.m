@@ -67,15 +67,19 @@ ai1= Demux(A,width(A),Nsc);
 %% MC simulation for Doppler STAR subspace beamformer
 numtrials=200;
 NFR= 10.^((0:10:60)./10); %NFR levels
-%doppstar_result=zeros(numtrials,length(NFR));
-for trial=1:10
-   [~,MAInfr,MAIpowers]=MAIfromNFR(A,NFR,M,NoSymbs);
-   beta_MAI= betas_NFR(MAIpowers,M,Nsc,K);
+doppstar_result=zeros(numtrials,length(NFR));
+for trial=1:100
+  [~,MAInfr,MAIpowers]=MAIfromNFR(A,NFR,M,NoSymbs);
+    beta_nfr= betas_NFR(MAIpowers,M,Nsc,K);
     for ind=1:length(NFR)
-        ausers=[ai1, reshape(cell2mat(MAInfr(1,ind)),1,[])];
-        %ausers= unitymag(ausers); %every element with unity magnitude
-        %modify channel parameters
-        beta(:,Nsc+1:end)= beta_MAI(:,:,ind);
+        holder=zeros(Nsc,(NoSymbs/Nsc)*(M-1));
+        for it=1:M-1
+           holder(:,(it-1)*(NoSymbs/Nsc)+1: it*(NoSymbs/Nsc))=Demux(MAInfr{1,ind}(it,:),width(A),Nsc);
+        end
+
+        ausers=[ai1,holder];
+        ausers= unitymag(ausers); 
+       
         gamma1= computegamma(beta(:,1:Nsc),DODs(1,:),Fjvec,r_bar,K);
         gamma2= computegamma(beta(:,Nsc+1:2*Nsc),DODs(2,:),Fjvec,r_bar,K);
         gamma3= computegamma(beta(:,2*Nsc+1:3*Nsc),DODs(3,:),Fjvec,r_bar,K);
@@ -95,7 +99,7 @@ for trial=1:10
         x=x+noise;
             
         %covariance matrix
-        [Rxx_theor,Rdes,Rmai,Risi,Rnn]= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise); %compute theoretical cov. matx#
+        [Rxx_theor,Rdes,Rmai,Risi,Rnn]= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise); %compute theoretical cov. matx#
         Rxx_prac= (1/L)* (x) * (x)';
     
         j=1;
@@ -108,20 +112,24 @@ for trial=1:10
         doppstar_weights= sum(weights,2,'omitnan');
         
         % SNIRout evaluation
-        SNIRout_doppstar= (ctranspose(doppstar_weights)*Rdes* (doppstar_weights))/ (ctranspose(doppstar_weights)*(Risi+Rnn)* (doppstar_weights));
+        SNIRout_doppstar= (ctranspose(doppstar_weights)*Rdes* (doppstar_weights))/ (ctranspose(doppstar_weights)*(Rnn)* (doppstar_weights));
         doppstar_result(trial,ind)= 10*log10(real(SNIRout_doppstar));
         save('doppstar_result.mat','doppstar_result');
     end  
 end
 
 %% 
-stem(mean(doppstar_result(1:50,:)));
+%semilogy(10*log10(NFR),mean(doppstar_result(1:100,:)),'-o');
+%stem(mean(doppstar_result(1:100,:)));
 %% MC simulation for Doppler STAR RAKE beamformer
 numtrials=100;
 NFR= 10.^((0:5:60)./10); %NFR levels
-rake_result=zeros(numtrials,length(NFR));
+%rake_result=zeros(numtrials,length(NFR));
 
-for trial=1:1
+up=[];
+downer=[];
+
+for trial=4:100
     [~,MAInfr,MAIpowers]=MAIfromNFR(A,NFR,M,NoSymbs);
     beta_nfr= betas_NFR(MAIpowers,M,Nsc,K);
     
@@ -130,8 +138,6 @@ for trial=1:1
         for it=1:M-1
            holder(:,(it-1)*(NoSymbs/Nsc)+1: it*(NoSymbs/Nsc))=Demux(MAInfr{1,ind}(it,:),width(A),Nsc);
         end
-%         ausers=[A, reshape(cell2mat(MAInfr(1,ind)),1,[])];
-%         ausers= Demux(ausers,width(ausers),Nsc);
         ausers=[ai1,holder];
         ausers= unitymag(ausers); %every element with unity magnitude
 
@@ -158,20 +164,29 @@ for trial=1:1
         %DOA estimation    
         [Rxx_theor,Rdes,Rmai,Risi,Rnn]=covtheor(H,G,N,Nc,K,Nsc,M,Pnoise);
         [w_rake,~]= weights4749(H,gamma,K,N,Nc,Nsc);
+%         up=[up,ctranspose(w_rake)*Rdes* (w_rake)];
+%         downer=[downer,ctranspose(w_rake)*(Rmai+Risi+Rnn)* (w_rake)];
 
         SNIRout_rake= (ctranspose(w_rake)*Rdes* (w_rake))/ (ctranspose(w_rake)*(Rmai+Risi+Rnn)* (w_rake));
         rake_result(trial,ind)= 10*log10(real(SNIRout_rake));
-
+        
     end
 end
 %% 
-plot(10*log10(NFR),(rake_result(1,:)),'-o'); %add 25 dB worst case scenario
+plot(10*log10(NFR),mean(doppstar_result(1:100,:)),'-o'); 
+hold on;
+plot(10*log10(NFR),mean(rake_result(1,:)),'-o'); %add 25 dB worst case scenario
+hold on;
+plot(10*log10(NFR),mean(spacesub_result(1:50,:)),'-o')
 %% space-only system with subspace weights
 numtrials=100;
 NFR= 10.^((0:5:60)./10); %NFR levels
-spacesub_result=zeros(numtrials,length(NFR));
+%spacesub_result=zeros(numtrials,length(NFR));
+space2=zeros(numtrials,length(NFR));
+up=[];
+downer=[];
 
-for trial=1:1
+for trial=1:10
     [~,MAInfr,MAIpowers]=MAIfromNFR(A,NFR,M,NoSymbs);
     beta_nfr= betas_NFR(MAIpowers,M,Nsc,K);
     for ind=1:length(NFR)
@@ -181,13 +196,13 @@ for trial=1:1
         end
         ausers=[ai1,holder];
         ausers= unitymag(ausers); %every element with unity magnitude
-
+       
         %generate received signal
         x=zeros(N,L);
         for n=1:L
             x(:,n)=findXspace(ausers,gamma,DOAs,r,Fjvec,n,L,M,K,Fc);
         end
-        rng shuffle;
+        %rng shuffle;
         Pnoise=0.01;
         x=x+sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
         Rxx= (1/width(x))*x*ctranspose(x);
@@ -197,14 +212,23 @@ for trial=1:1
         space_weights=unitymag(space_weights);
         space_weights=sum(space_weights,2);
 
+        Rjj=spaceRjj(DOAs,r,Fjvec,Fc,M);
+
         Sdd= computeManifoldRx(DOAs(1,:)',0,r,Fc,Fjvec(1),lightvel);
-        Rdd= Sdd * Sdd';
-        SNIRout= (space_weights'* Rdd * space_weights)/(space_weights'*(Rxx-Rdd)*space_weights);
+        %Rdd= Sdd *gamma(1,1)* Sdd';
+        Rdd= Sdd*Sdd';
 
-        spacesub_result(trial,ind)=10*log10(real(SNIRout));
+        up=[up,space_weights'* Rdd * space_weights];
+        downer=[downer,space_weights'*(Rxx-Rdd)*space_weights];
+       % SNIRout= (space_weights'* Rdd * space_weights)/(space_weights'*(Rxx-Rdd)*space_weights);
+        SNIRout= (space_weights'* Rdd * space_weights)/(space_weights'*(Rjj+0.01*speye(N,N))*space_weights);
 
+        %spacesub_result(trial,ind)=10*log10(real(SNIRout));
+        space2(trial,ind)= 10*log10(real(SNIRout_rake));
     end
 
 end
+%% 
+semilogy(10*log10(NFR),mean(spacesub_result(1:10,:)),'-o')
 
 

@@ -1,10 +1,12 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
 %Define constants
-NoSymbs=40;
+L=40; %number of snaphots of x[n]
+Nsc=5;
+NoSymbs= L*Nsc;
 M=5; %# users
 N_bar=16;
-Nsc=1;
+Nsc=5;
 Nc=31;
 Ts=0.1e-6;
 Tc=Ts*Nsc;
@@ -47,6 +49,8 @@ ausers=ausers- real(mean(mean(ausers)));
 [r,r_bar]=TxRxArr(lightvel,Fc,9);
 N=length(r);
 [delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(0,0,Nsc);
+delays(1,:)=[42,85,103];
+VDops(1,:)=[25,72,106];
 %beta=real(beta);
 
 %find f and gamma
@@ -112,7 +116,7 @@ x=x+noise;
 toc;
 %% eqn 24
 % load("x_small_b.mat");
-Rxx_theor= covtheor(H,G,J,N,Nc,K,Nsc,M,Pnoise);
+Rxx_theor= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise);
 [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% Delay-Velocity cost function inputs
@@ -124,9 +128,11 @@ Rxx_res= (1/width(x_res))* (x_res)*ctranspose(x_res);
 tic;
 %[cost2d,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
 [cost2d,del_est,uk_est]= TwoDcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
+
+%% 
 figure;
 surf((1:140),(0:Nc*Nsc-1),20*log10((cost2d)),'FaceAlpha',1,'EdgeAlpha',0.5);
-xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Cost Function(dB)');
+xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Equation NUM Amplitude(dB)');
 zlim([15 150]);
 title('Joint Delay-Doppler Velocity Estimation');
 shading('interp');
@@ -145,7 +151,8 @@ for k=1:K
     plot(20*log10(cost1d(k,:)),'Color',Colours{k},'DisplayName',txt);
     hold on;
 end
-xlabel('DOA(degrees)'); ylabel('Gain(dB)'); title('DOA Estimation'); legend('show');
+grid on;
+xlabel('DOA(degrees)'); ylabel('Equation NUM Amplitude(dB)'); title('DOA Estimation'); legend('show');
 DOAest= findMaxofPath(cost1d);
 hold off;
 %% gamma_kj ampl. estimation for one path
@@ -157,6 +164,7 @@ Gj=G(1,1);
 gamma_est=gampsearch(Rxx,lambda_min,Hj,gamma,Gj,N,Nc,Nsc,Next);
 % [Pcompkjun,hkallj]=  gAmpSearchN(gamma,Rxx_prac,lambda_min,H,k,K,M,Nsc,N,Next,J,Fjvec,r,c(:,1));
 % phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,deg2rad(43),N,Next,Nsc,K);
+%% 
 
 
 

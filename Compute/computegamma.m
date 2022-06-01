@@ -12,6 +12,6 @@ function[gammai]= computegamma(beta,DOD,Fjvec,array,K)
             Scurr=computeManifoldTx(DOD(path),0,array,Fc,Fjvec(j),light_vel) ;
             holder(path)= (Scurr)'*w_bar ;
         end
-        gammai(:,j)= beta(:,j).* holder(path);
+        gammai(:,j)= beta(:,j).* holder;
     end
 end
