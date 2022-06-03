@@ -65,10 +65,10 @@ bits=round(rand(1,2*NoSymbs));
 A= QPSKMod(bits,1,deg2rad(43)); 
 ai1= Demux(A,width(A),Nsc);
 %% MC simulation for Doppler STAR subspace beamformer
-numtrials=200;
-NFR= 10.^((0:10:60)./10); %NFR levels
+numtrials=100;
+NFR= 10.^((0:5:60)./10); %NFR levels
 doppstar_result=zeros(numtrials,length(NFR));
-for trial=1:100
+for trial=1:numtrials
   [~,MAInfr,MAIpowers]=MAIfromNFR(A,NFR,M,NoSymbs);
     beta_nfr= betas_NFR(MAIpowers,M,Nsc,K);
     for ind=1:length(NFR)

@@ -24,8 +24,11 @@ function[space_gain]= space_only_beampattern(DOAest,r,Fc,Fjvec,lightvel,Nc,Nsc)
         surf((1:360),(0:Nc*Nsc-1),abs(space_gain((k-1)*Nc*Nsc+1:k*Nc*Nsc,:)),'FaceAlpha',1,'EdgeAlpha',0.5);
         hold on; %the hold on must always be here-otherwise the plot is not going to be correct
         xlabel('DOA (degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
+        title('Massive MIMO Subspace Rx Beampattern');
         shading('interp');
         colormap('jet');
+        ax = gca; 
+        ax.FontSize = 11; 
     end
 
     %compute the 3 path weights, normalise, add them up and do the surf

@@ -35,16 +35,6 @@ end
 ausers=[ai1, cell2mat(MAIres)];
 ausers= unitymag(ausers); %every element with unity magnitude
 ausers=ausers- real(mean(mean(ausers)));
-
-%the symbol stream of user 1 has bigger power than the others
-%Tx outputs
-% [m1]=Tx(ai1,c(:,1),Nsc,N_bar,Tc);
-% [m2]=Tx(MAIres{1},c(:,2),Nsc,N_bar,Tc);
-% [m3]=Tx(MAIres{2},c(:,3),Nsc,N_bar,Tc);
-% [m4]=Tx(MAIres{3},c(:,4),Nsc,N_bar,Tc);
-% [m5]=Tx(MAIres{4},c(:,5),Nsc,N_bar,Tc);
-% mtot=[m1;m2;m3;m4;m5];
-% clear m1 m2 m3 m4 m5 
 %% Define channel parameters
 [r,r_bar]=TxRxArr(lightvel,Fc,9);
 N=length(r);
@@ -106,25 +96,6 @@ end
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
 toc;
-%% Delay-Velocity cost function inputs
-Rxx_prac= (1/L)* (x) * (x)';
-[akj,Fkj]=findvecs(Fjvec,(1:140),c(:,1),Nc,Nsc,Ts);
-x_res= reshape(x,2*Nc*Nsc,[]);
-Rxx_res= (1/width(x_res))* (x_res)*ctranspose(x_res);
-[Pn_res,~]= findPn(Rxx_res,length(Rxx_res)-M*Nsc);
-%% Delay-Velocity cost function 
-tic;
-[cost2d,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
-figure;
-surf((1:140),(0:Nc*Nsc-1),15*log10((cost2d))-10,'FaceAlpha',1,'EdgeAlpha',0.5);
-xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Equation NUM Amplitude(dB)');
-zlim([0 150]);
-title('Joint Delay-Doppler Velocity Estimation');
-shading('interp');
-colormap('jet');
-ax = gca; 
-ax.FontSize = 11; 
-toc;
 %% DOA Cost Function
 Rxx_theor= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise);
 [Pn,~]= findPn(Rxx_theor,M*Nsc);
@@ -139,26 +110,9 @@ for k=1:K
     plot(20*log10(cost1d(k,:)),'Color',Colours{k},'DisplayName',txt);
     hold on;
 end
+hold off;
 grid on;
 xlabel('DOA(degrees)'); ylabel('Equation NUM Amplitude(dB)'); title('DOA Estimation'); legend('show');
+ax = gca; 
+ax.FontSize = 11; 
 DOAest= findMaxofPath(cost1d);
-hold off;
-%% gamma_kj ampl. estimation for one path
-k=1;
-lambda_min= min(eig(Rxx_prac));
-
-Hj=H(1:558,:);
-Gj=G(1,1);
-gamma_est=gampsearch(Rxx,lambda_min,Hj,gamma,Gj,N,Nc,Nsc,Next);
-% [Pcompkjun,hkallj]=  gAmpSearchN(gamma,Rxx_prac,lambda_min,H,k,K,M,Nsc,N,Next,J,Fjvec,r,c(:,1));
-% phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,deg2rad(43),N,Next,Nsc,K);
-%% 
-
-
-
-
-
-
-
-
-

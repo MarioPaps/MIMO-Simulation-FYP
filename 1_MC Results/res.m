@@ -14,7 +14,7 @@
 % grid on;
 % hold off;
 % ylim([10e-5 10e1]); legend('show');
-addpath('.\1_MC Results\')
+
 
 array1=load("rmse.mat");
 array2=load("newest.mat");
@@ -37,11 +37,13 @@ mean_rmse=mean(RMSEradvel(1:100,1:9));
 figure;
 loglog(xaxis(1:9),mean_rmse,'-o','DisplayName','Radial Velocity (m/s) RMSE');
 % line(xaxis,RMSEradvel);
-xlabel('SNRxL'); ylabel('Estimation RMSE');
+xlabel('SNR x L'); ylabel('Parameter Estimation RMSE');
 grid on;
 hold on;
 loglog(xaxis(1:9),ress,'-s','DisplayName','DOA RMSE');
-set(gca,'YLim',[10e-7 10e1],'YTick',10.^(-7:1))
+set(gca,'YLim',[10e-7 10e1],'YTick',10.^(-7:1));
+ax = gca; 
+ax.FontSize = 11; 
 % ylim([10e-6 10e1]);
 legend('show');
 %% velocity data
