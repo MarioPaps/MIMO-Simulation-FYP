@@ -6,7 +6,7 @@ Nsc=5;
 NoSymbs= L*Nsc;
 M=5; %# users
 N_bar=16;
-Nsc=5;
+Nsc=1;
 Nc=31;
 Ts=0.1e-6;
 Tc=Ts*Nsc;
@@ -68,6 +68,7 @@ gamma3= computegamma(beta(:,2*Nsc+1:3*Nsc),DODs(3,:),Fjvec,r_bar,K);
 gamma4= computegamma(beta(:,3*Nsc+1:4*Nsc),DODs(4,:),Fjvec,r_bar,K);
 gamma5= computegamma(beta(:,4*Nsc+1:5*Nsc),DODs(5,:),Fjvec,r_bar,K);
 gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
+gamma=real(gamma);
 G= computeG(gamma,K);
 clear gamma1 gamma2 gamma3 gamma4 gamma5; 
 
@@ -143,19 +144,38 @@ grid on;
 xlabel('DOA(degrees)'); ylabel('Equation NUM Amplitude(dB)'); title('DOA Estimation'); legend('show');
 DOAest= findMaxofPath(cost1d);
 hold off;
-%% gamma_kj ampl. estimation for one path
-k=1;
-lambda_min= min(eig(Rxx_prac));
+%% gamma_kj ampl. estimation for all paths on 1 subcarrier
+gammapred=zeros(1,K);
+Hj=H(1:height(H)/5,:);
+for k=1:K
+    gammapred(k)=gammaAmpSearch(Rxx_prac,gamma,Hj,k,N,Nc,Nsc);
+end
+gammapred= fix(gammapred.*100)./100;
+gamma_actual= fix(gamma(1:K,1).*100)./100;
+%% bar char plotting
+plotmat=zeros(K,2);
+for k=1:K
+    plotmat(k,:)=[gammapred(k),gamma_actual(k)];
+end
+figure;
+h=bar(plotmat);
+xlabel('Multipath Index');ylabel('Fading Coefficient Amplitude');
+title('Fading Coefficient Amplitude Estimation');
+ax = gca; 
+ax.FontSize = 11; 
 
-Hj=H(1:558,:);
-Gj=G(1,1);
-gamma_est=gampsearch(Rxx,lambda_min,Hj,gamma,Gj,N,Nc,Nsc,Next);
-% [Pcompkjun,hkallj]=  gAmpSearchN(gamma,Rxx_prac,lambda_min,H,k,K,M,Nsc,N,Next,J,Fjvec,r,c(:,1));
-% phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,deg2rad(43),N,Next,Nsc,K);
+%gamma_est=gammaAmpSearch(Rxx_prac,gamma,Hj,k,N,Nc,Nsc);
+%gamma_est= fix(gamma_est*100)/100
 %% 
 
+%gamma_est=gampsearchN(Rxx_prac,lambda_min,Hj,gamma,Gj,N,Nc,Nsc,Next);
+%[Pcompkjun,hkallj]=  gAmpSearchN(gamma,Rxx_prac,lambda_min,H,k,K,M,Nsc,N,Next,J,Fjvec,r,c(:,1));
+% phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,deg2rad(43),N,Next,Nsc,K);
+%% 
+dd = [1.5818 1.5332; 1 1];
+bar(dd)
 
-
+%% 
 
 
 

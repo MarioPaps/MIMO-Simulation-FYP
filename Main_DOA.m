@@ -116,3 +116,15 @@ xlabel('DOA(degrees)'); ylabel('Equation NUM Amplitude(dB)'); title('DOA Estimat
 ax = gca; 
 ax.FontSize = 11; 
 DOAest= findMaxofPath(cost1d);
+%% heatmap plot
+figure;
+contour((1:360)',(1:K),20*log10(cost1d));
+figure;
+pcolor((1:360)',(1:K),20*log10(cost1d));
+xlabel('DOA(degrees)'); ylabel('Path Index');
+yticks(1:1:K); title('Equation 34 Heatmap Representation');
+shading interp;
+colorbar;
+ax = gca; 
+ax.FontSize = 11; 
+

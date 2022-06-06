@@ -84,5 +84,6 @@ X = ones(M,N);
 Xcols = reshape(X,M,1,N);
 Xrows = reshape(X,1,M,N);
 result = bsxfun(@times,Xcols,Xrows)
-%% 
+%% more testing
+x = findzero(2,3.5,0)
 

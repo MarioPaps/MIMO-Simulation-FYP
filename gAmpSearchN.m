@@ -13,32 +13,47 @@ function[Pcompkjun,hkallj]= gAmpSearchN(gamma,Rxx,lambda_min,H,k,K,M,Nsc,N,Next,
          products(:,:,j)= (hkallj(:,j))*ctranspose(hkallj(:,j));
     end
 
-    x=(0:0.1:(max(gamma_possible)));
-    x=(0:0.01:0.3);
+%     x=(0:0.1:(max(gamma_possible)));
+%     x=(0:0.01:0.3);
     Rxx_offset= Rxx-lambda_min;
-    %cost fn search
-    for j=1:Nsc
-        ksi=[];
-        for iter=1:length(x)
-            Rkjgamma=Rxx_offset- (x(iter).^2)*products(:,:,j);
+    options = optimset('TolX',1e-4);
+   % estim= fminsearch(@ksisearch,1,options);
+    %estim= fmincon(@ksisearch,1,[1 1.6]);
+    estim=fminbnd(@ksisearch,0,1.6,options);
+    
+    function ksi= ksisearch(x)
+            Rkjgamma=Rxx_offset- (x.^2).*products(:,:,1);
             eigenvalues= eig(Rkjgamma);
             [pos_eval,neg_eval,~,~]= evals(eigenvalues);
-            ksi(iter)=(sum(pos_eval+1)) + 10*log10(sum(abs(neg_eval)));
-        end
-       ksi=abs(ksi);
-       [~,pos]= max(ksi);
-       gammapred(j)= x(pos);
+            ksi=(sum(pos_eval+1)) + 10*log10(sum(abs(neg_eval)));      
     end
-    plot(ksi);
-    disp('hey');
+
+
+
+%     %cost fn search
+%     for j=1:Nsc
+%         ksi=[];
+%         for iter=1:length(x)
+%             Rkjgamma=Rxx_offset- (x(iter).^2)*products(:,:,j);
+%             eigenvalues= eig(Rkjgamma);
+%             [pos_eval,neg_eval,~,~]= evals(eigenvalues);
+%             ksi(iter)=(sum(pos_eval+1)) + 10*log10(sum(abs(neg_eval)));
+%         end
+%        ksi=abs(ksi);
+%        [~,pos]= max(ksi);
+%        gammapred(j)= x(pos);
+%     end
+%     plot(ksi);
+%     disp('hey');
     
     %use predicted gammas to construct Pcompkjun
-    gammapred= gamma_possible;
-    for j=1:Nsc
-        Rkjun((j-1)*N*Next+1: j*N*Next, (j-1)*N*Next+1: j*N*Next)= Rxx-(gammapred(j)^2)*products(:,:,j);
-        holder=Rkjun((j-1)*N*Next+1: j*N*Next, (j-1)*N*Next+1: j*N*Next);
-        Pkjun=  holder* inv(holder'*holder)*holder';
-        Pcompkjun((j-1)*N*Next+1: j*N*Next,(j-1)*N*Next+1: j*N*Next) = eye(N*Next)-Pkjun;
-    end
-%     Pcompkjun=0;
+%     gammapred= gamma_possible;
+%     for j=1:Nsc
+%         Rkjun((j-1)*N*Next+1: j*N*Next, (j-1)*N*Next+1: j*N*Next)= Rxx-(gammapred(j)^2)*products(:,:,j);
+%         holder=Rkjun((j-1)*N*Next+1: j*N*Next, (j-1)*N*Next+1: j*N*Next);
+%         Pkjun=  holder* inv(holder'*holder)*holder';
+%         Pcompkjun((j-1)*N*Next+1: j*N*Next,(j-1)*N*Next+1: j*N*Next) = eye(N*Next)-Pkjun;
+%     end
+
+Pcompkjun=0;
 end
