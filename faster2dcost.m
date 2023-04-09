@@ -1,3 +1,12 @@
+%%MATLAB function to implement the 2-D delay-radial velocity cost function
+%Nc: PN code length
+%Nsc: number of subcarriers
+%K: number of paths per user
+%akj: vector defined in Equation 26
+%Fkj: vector defined in Equation 27
+%Pn: projection operator onto noise subspace
+%J: shifting matrix
+%cost: matrix obtained from evaluating the cost function of Equation 42
 function[cost,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays,rad_vel_range,akj,Fkj,Pn,J) 
     
     del=0:Nc*Nsc-1;
@@ -6,22 +15,20 @@ function[cost,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays,rad_vel_range,akj,Fk
         J_powers{delk+1}= J^(delk);
     end
     cost=zeros(length(del),length(rad_vel_range));
-    ratio=zeros(1,Nsc);
     
     for delk=del
-        storage=zeros(Nsc,length(rad_vel_range));
+        ratio=zeros(Nsc,length(rad_vel_range));
         for j=1:Nsc
             tempo= J_powers{delk+1} * akj(:,delk+1,j);
             tempor= tempo .*Fkj(:,:,j);
             numer= sum(tempor.*conj(tempor),1);
             den= diag(tempor'*Pn*tempor);
             den= transpose(den);
-            storage(j,:)=numer./den;
+            ratio(j,:)=numer./den;
         end
-        cost(delk+1,:)= (1/Nsc)*sum(storage,1);
+        cost(delk+1,:)= (1/Nsc)*sum(ratio,1);
 
     end
-%     cost=0;
     cost=abs(cost);
     uk_est=zeros(1,K);
     del_est=delays;

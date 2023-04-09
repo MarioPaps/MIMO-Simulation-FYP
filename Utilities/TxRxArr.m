@@ -14,6 +14,11 @@ function[r,r_bar]=TxRxArr(lightvel,Fc,UCA)
         ry=[0.30 1.15 1.46 1.09 0.20 -0.77 -1.39 -1.36 -0.69]';
         rz=zeros(length(rx),1);
         r=[rx,ry,rz];
+%         figure;
+%         plot(rx,ry,'o-');
+%         hold on;
+%         plot(rx_bar,ry_bar,'o-');
+%         hold off;
         r= r*(lambda/2);
     else
         step=360/UCA;

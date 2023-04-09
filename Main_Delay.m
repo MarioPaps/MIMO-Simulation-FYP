@@ -117,7 +117,7 @@ tic;
 [cost2d,del_est,uk_est]= faster2dcost(K,Nc,Nsc,delays(1,:),(1:140),akj,Fkj,Pn_res,J);
 figure;
 surf((1:140),(0:Nc*Nsc-1),15*log10((cost2d))-10,'FaceAlpha',1,'EdgeAlpha',0.5);
-xlabel('Velocity(m/s)'); ylabel('Delay(Ts s)'); zlabel('Equation NUM Amplitude(dB)');
+xlabel('Velocity (m/s)'); ylabel('Delay Ts (s)'); zlabel('Equation NUM Amplitude(dB)');
 zlim([0 150]);
 title('Joint Delay-Doppler Velocity Estimation');
 shading('interp');

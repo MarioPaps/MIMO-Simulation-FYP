@@ -1,12 +1,16 @@
+%Reference paper
+% Sridhar, V; Gabillard, T; Manikas, A.
+% Spatiotemporal−MIMO Channel Estimator and Beamformer for 5G
+% IEEE Transactions on Wireless Communications. 2016
+% vol: 15 (12) pp: 8025−8038
 addpath('.\Utilities\');
 addpath('.\Compute\');
 %Define constants
 L=40; %number of snaphots of x[n]
-Nsc=5;
+Nsc=1;
 NoSymbs= L*Nsc;
 M=5; %# users
 N_bar=16;
-Nsc=1;
 Nc=31;
 Ts=0.1e-6;
 Tc=Ts*Nsc;
@@ -47,38 +51,29 @@ ausers=ausers- real(mean(mean(ausers)));
 % clear m1 m2 m3 m4 m5 
 %% Define channel parameters
 [r,r_bar]=TxRxArr(lightvel,Fc,9);
+%[r,r_bar]=TxRxArr(lightvel,Fc,"50");
 N=length(r);
-[delays,beta,DODs,DOAs,VDops]= ChannelParam(0,0,0,Nsc);
-delays(1,:)=[42,85,103];
-VDops(1,:)=[25,72,106];
-DOAs(1,:)=[62,150,220];
-%beta=real(beta);
+%[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0,Nsc);
+[delays,beta,DODs,DOAs,VDops]=ChannelParam(0,0,0,Nsc);
+% delays(1,:)=[42,85,103];
+% DOAs(1,:)=[62,150,220];
+% VDops(1,:)=[25,72,106];
+f=zeros(K*Nsc,L*M);
+gamma=zeros(K,M*Nsc);
 
-%find f and gamma
-f1j= computef(NoSymbs/Nsc,VDops(1,1:K),Fjvec,Fc,Tcs,lightvel,K);
-f2j= computef(NoSymbs/Nsc,VDops(2,1:K),Fjvec,Fc,Tcs,lightvel,K);
-f3j= computef(NoSymbs/Nsc,VDops(3,1:K),Fjvec,Fc,Tcs,lightvel,K);
-f4j= computef(NoSymbs/Nsc,VDops(4,1:K),Fjvec,Fc,Tcs,lightvel,K);
-f5j= computef(NoSymbs/Nsc,VDops(5,1:K),Fjvec,Fc,Tcs,lightvel,K);
-
-f=[f1j,f2j,f3j,f4j,f5j]; clear f1j f2j f3j f4j f5j;
-gamma1= computegamma(beta(:,1:Nsc),DODs(1,:),Fjvec,r_bar,K);
-gamma2= computegamma(beta(:,Nsc+1:2*Nsc),DODs(2,:),Fjvec,r_bar,K);
-gamma3= computegamma(beta(:,2*Nsc+1:3*Nsc),DODs(3,:),Fjvec,r_bar,K);
-gamma4= computegamma(beta(:,3*Nsc+1:4*Nsc),DODs(4,:),Fjvec,r_bar,K);
-gamma5= computegamma(beta(:,4*Nsc+1:5*Nsc),DODs(5,:),Fjvec,r_bar,K);
-gamma=[gamma1, gamma2,gamma3,gamma4,gamma5];
-gamma=real(gamma);
-G= computeG(gamma,K);
-clear gamma1 gamma2 gamma3 gamma4 gamma5; 
-
+for user=1:M
+    f(:,(user-1)*L+1: user*L)=computef(NoSymbs/Nsc,VDops(user,:),Fjvec,Fc,Tcs,lightvel,K);
+    gamma(:,(user-1)*Nsc+1:user*Nsc)=computegamma(beta(:,(user-1)*Nsc+1: user*Nsc),DODs(user,:),Fjvec,r_bar,K);
+end
+G= computeG(gamma,K); 
 SNR_abs= 10^(20/10);
-Pnoise= abs(1/SNR_abs);
+PTx= 1;
+Pnoise= abs( PTx/SNR_abs);
 %% H for equation 17
 J = [zeros(1,2*Nc*Nsc-1) 0; eye(2*Nc*Nsc-1), zeros(2*Nc*Nsc-1,1)];
 L=NoSymbs/Nsc;
-Next= 2*Nc*Nsc;
-H=zeros(M*2*N*Nc*Nsc,K*Nsc);
+Next=2*Nc*Nsc;
+H=zeros(M*N*Next,K*Nsc);
 for i=1:M
     for j=1:Nsc
         row_start= (i-1)*N*Next+1;
@@ -97,7 +92,7 @@ for i=1:M
 end
 clear h1 h2 h3;
 %% find x-equation 17
-x=zeros(N*Next,L);
+x=zeros(N*2*Nc*Nsc,L);
 % x=[];
 tic;
 for n=1:L
@@ -132,7 +127,7 @@ Rxx_theor= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise);
 del_est=delays(1,:); 
 vel_est=VDops(1,:);
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
-[cost1d]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
+[cost1d]=faster1dcost(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
 Colours = {'red','g','blue'};
 figure;
 for k=1:K
@@ -146,12 +141,15 @@ DOAest= findMaxofPath(cost1d);
 hold off;
 %% gamma_kj ampl. estimation for all paths on 1 subcarrier
 gammapred=zeros(1,K);
-Hj=H(1:height(H)/5,:);
-for k=1:K
-    gammapred(k)=gammaAmpSearch(Rxx_prac,gamma,Hj,k,N,Nc,Nsc);
-end
+% for j=1:Nsc
+   % Hj=H(1:height(H)/M,(j-1)*K+1: j*K);
+    Hj=H(1:height(H)/M,:);
+    for k=1:K
+        gammapred(k)=gammaAmpSearch(Rxx_prac,gamma,Hj,k,N,Nc,j);
+    end
+% end
 gammapred= fix(gammapred.*100)./100;
-gamma_actual= fix(gamma(1:K,1).*100)./100;
+gamma_actual= fix(abs(gamma(1:K,1)).*100)./100;
 %% bar char plotting
 plotmat=zeros(K,2);
 for k=1:K
@@ -159,23 +157,17 @@ for k=1:K
 end
 figure;
 h=bar(plotmat);
+grid on; grid minor;
 xlabel('Multipath Index');ylabel('Fading Coefficient Amplitude');
 title('Fading Coefficient Amplitude Estimation');
+legend('Estimated','True');
+ylim([0 1]); yticks(0:0.1:1);
 ax = gca; 
 ax.FontSize = 11; 
 
-%gamma_est=gammaAmpSearch(Rxx_prac,gamma,Hj,k,N,Nc,Nsc);
-%gamma_est= fix(gamma_est*100)/100
-%% 
 
-%gamma_est=gampsearchN(Rxx_prac,lambda_min,Hj,gamma,Gj,N,Nc,Nsc,Next);
-%[Pcompkjun,hkallj]=  gAmpSearchN(gamma,Rxx_prac,lambda_min,H,k,K,M,Nsc,N,Next,J,Fjvec,r,c(:,1));
-% phase_est=gPhSearch(x,f,ausers,Pcompkjun,hkallj,deg2rad(43),N,Next,Nsc,K);
-%% 
-dd = [1.5818 1.5332; 1 1];
-bar(dd)
 
-%% 
+
 
 
 

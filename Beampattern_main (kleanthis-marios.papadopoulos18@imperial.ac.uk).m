@@ -1,7 +1,7 @@
 addpath('.\Utilities\');
 addpath('.\Compute\');
 addpath('.\Beampattern_files\');
-%addpath('C:\Users\Marios\Desktop\MAT');
+addpath('C:\Users\Marios\Desktop\MAT');
 M=5; %# users   
 N_bar=16;
 L=40; %number of snaphots of x[n]
@@ -18,8 +18,10 @@ lambda= lightvel/Fc;
 Fjvec=((0:Nsc-1)*(1/Tc))';
 c=PNSeqGen();
 %% Generate user and MAI data
-load("bitstream.mat");
-bits= bitstream(1,:); % round(rand(1,2*NoSymbs));
+ load("bitstream.mat");
+% bits=bitstream(1,:);
+bits= bitstream(1,:); % round(rand(5,2*NoSymbs));
+bits= round(rand(1,2*NoSymbs));
 A= QPSKMod(bits,sqrt(2),deg2rad(43));
 ai1=Demux(A,width(A),Nsc);
 
@@ -36,7 +38,8 @@ ausers=[ai1, cell2mat(MAIres)];
 ausers= unitymag(ausers); %every element with unity magnitude
 ausers=ausers- real(mean(mean(ausers)));
 %% Define channel parameters
-[r,r_bar]=TxRxArr(lightvel,Fc,9);
+[r,r_bar]=TxRxArr(lightvel,Fc,100);
+%[r,r_bar]=TxRxArr(lightvel,Fc,"50");
 N=length(r);
 %[delays,beta,DODs,DOAs,VDops]= Channel_Param_Gen(1,0,Nsc);
 [delays,beta,DODs,DOAs,VDops]=ChannelParam(0,0,0,Nsc);
@@ -79,6 +82,9 @@ end
 % load("x.mat");
 noise= sqrt(Pnoise/2)* (randn(size(x))+1i*randn(size(x)));
 x=x+noise;
+%% eqn 24
+%[Rxx_theor,~,~,~,~]= covtheor(H,G,N,Nc,K,Nsc,M,Pnoise); %compute theoretical cov. matx#
+% [Pn_theor,~]=findPn(Rxx_theor,M*Nsc);
 Rxx_prac= (1/L)* (x) * (x)';
 %% Delay-Velocity cost function inputs
 [akj,Fkj]=findvecs(Fjvec,(1:140),c(:,1),Nc,Nsc,Ts);
@@ -117,17 +123,17 @@ Hj=H(1:2*N*Nc*Nsc, (j-1)*K+1: j*K);
 Gj= G(:, (j-1)*K+1: j*K);
 gammaj= gamma(:,j);
 out=findWeights(Rxx_prac,Hj,Gj,gammaj,K,N,Nc,Nsc);
-weights= unitymag(out); %each element must have unity magnitude
+weights= unitymag(out);
 total_weights= sum(weights,2,'omitnan');
 %% Doppler STAR vectors
-theta=(1:1:360);
+theta=(1:0.1:360);
 delrange=(0:1:Nc*Nsc-1);
 hdoppstarvecs= zeros(length(delrange)*2*N*Nc*Nsc,length(theta));
 for delk= delrange
     hdoppstarvec=DoppSTARmanifold(theta,floor(delk),VDops(1,1),J,Fjvec(1),Nsc,r,c(:,1));
     hdoppstarvecs(delk*2*N*Nc*Nsc+1:(delk+1)*2*N*Nc*Nsc,1:length(theta))=hdoppstarvec;
 end
-%% Plot the beampattern for small UCA
+%% Plot the beampattern for UCA 9 elements
 gain=zeros(Nc*Nsc,length(theta));
 for delk=0:Nc*Nsc-1
     gain(delk+1,1:length(theta))=abs( ctranspose(total_weights)* hdoppstarvecs( delk*2*N*Nc*Nsc+1: (delk+1)*2*N*Nc*Nsc,1:length(theta)) );
@@ -135,16 +141,15 @@ end
 
 gain=( (gain-min(min(gain)))/(max(max(gain))-min(min(gain))) ) *N*Nc*Nsc;
 figure;
-surf((theta),(0:Nc*Nsc-1),abs(gain),'FaceAlpha',1,'EdgeAlpha',0.5);
-
-xlabel('DOA (degrees)'); ylabel('Delay Ts (s)'); zlabel('Array Gain');
+surf((1:0.1:360),(0:Nc*Nsc-1),abs(gain),'FaceAlpha',1,'EdgeAlpha',0.5);
+xlabel('DOA(degrees)'); ylabel('Delay (Ts s)'); zlabel('Array Gain');
 title('Doppler-STAR Subspace Rx Beampattern');
 ax = gca; 
 ax.FontSize = 11; 
 shading('interp');
 colormap('jet');
 %% Doppler STAR vectors- case 2: large UCAs
-for delk= 0:1:Nc*Nsc-1
+for delk= 0:0.1:Nc*Nsc
     ch=num2str(delk);
     if(length(ch)>1)
         ch=strrep(ch,'.','_');
@@ -159,7 +164,7 @@ end
 %clearvars -except N Nc Nsc total_weights theta;
 %% Plot large UCA
 %large_gain=zeros(length((0:1:Nc*Nsc)),length((1:1:360)));
-for delk=0:1:Nc*Nsc-1
+for delk=130:154
      ch=num2str(delk);
 %      if(length(ch)>1)
 %         ch=strrep(ch,'.','_');
@@ -184,6 +189,7 @@ ax = gca;
 ax.FontSize = 11; 
 shading('interp');
 colormap('jet');
+%datatip(surf,220.7,9,1229.61);
 %% approach 1 -> sum across subcarriers
 %h_overall= zeros(2790*Nc*Nsc,360);
 % for delk=0:Nc*Nsc-1 
@@ -195,6 +201,9 @@ colormap('jet');
 %        % gain(delk+1,DOA)= ctranspose(w_RAKE_total)* deldoa_sum;
 %     end
 % end
+
+
+
 for delk=0:Nc*Nsc-1 
    % deldoa_sum=squeeze(sum(reshape(hdoppstarvecs(delk*2790+1: (delk+1)*2790,:),2790,360,[]),3));
    deldoa_sum=sum(reshape(hdoppstarvecs(delk*2790+1: (delk+1)*2790,:),2790,360,[]),3);
@@ -208,7 +217,7 @@ colormap('jet');
 
 %% space-only manifold beampattern ->figure 7b
 %DOAest=DOAs(1,:);
-DOAest=[62,150,220];
+DOAest=[62,220,220];
 space_gain= space_only_beampattern(DOAest,r,Fc,Fjvec,lightvel,Nc,Nsc);
 
 %% Estimate of transmitted symbol vector

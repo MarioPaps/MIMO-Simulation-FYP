@@ -3,14 +3,16 @@
 %pass H in as the matrix of the first user on all paths
 function[gamma_amp_est]=gammaAmpSearch(Rxx,gamma,H,k,N,Nc,Nsc)
     Rxx_offset=Rxx-min(eig(Rxx));
-    products=zeros(N*2*Nc*Nsc,N*2*Nc*Nsc,Nsc,Nsc);
-    hkallj= H(:,k); 
-    for j=1:Nsc
-         products(:,:,j)= (hkallj(:,j))*ctranspose(hkallj(:,j));
-    end
+    products=zeros(N*2*Nc*Nsc,N*2*Nc*Nsc);
+    hkallj= H(:,k);
+    products= (hkallj(:,1))*ctranspose(hkallj(:,1));
+     
+%     for j=1:Nsc
+%          products(:,:,j)= (hkallj(:,j))*ctranspose(hkallj(:,j));
+%     end
 
     options = optimset('TolX',1e-3);
-    lim=fix(gamma(k,1)*100)/100 + 0.01 ;
+    lim=fix(abs(gamma(k,Nsc))*100)/100 + 0.01 ;
     gamma_amp_est=fminbnd(@ksisearch,0,lim,options);
     function ksi= ksisearch(x)
             Rkjgamma=Rxx_offset- (x.^2).*products(:,:,1);

@@ -86,4 +86,39 @@ Xrows = reshape(X,1,M,N);
 result = bsxfun(@times,Xcols,Xrows)
 %% more testing
 x = findzero(2,3.5,0)
+%% plot the antenna arrays
+rx_bar=[2.56,2.37,1.81,0.98,0,-0.98,-1.81,-2.37,-2.56,-2.37,-1.81,-0.98,0,0.98,1.81,2.37]';
+rx_bar=[rx_bar; rx_bar(1)];
+ry_bar=[0,0.98,1.81,2.37,2.56,2.37,1.81,0.98,0,-0.98,-1.81,-2.37,-2.56,-2.37,-1.81,-0.98]';
+ry_bar=[ry_bar; ry_bar(1)];
+rz_bar=zeros(length(rx_bar),1);
+figure;
+plot(rx_bar,ry_bar,'.','MarkerSize',30,'DisplayName','Tx Antenna Array' );
+rx=[1.43 0.90 -0.05 -0.98 -1.45 -1.24 -0.45 0.55 1.29]';
+rx=[rx;rx(1)];
+ry=[0.30 1.15 1.46 1.09 0.20 -0.77 -1.39 -1.36 -0.69]';
+ry=[ry;ry(1)];
+hold on;
+plot(rx,ry,'.','MarkerSize',30,'DisplayName','Rx Antenna Array' );
+grid on;
+grid minor;
+legend('show');
+xlabel('x axis ({\lambda}/2)'); ylabel('y axis ({\lambda}/2)'); title('Tx and Rx Antenna Array Geometry');
+ax = gca; 
+ax.FontSize = 11; 
+%% plot arrays
+array1=[-2 0 0; -1 0 0; 0 0 0; 1 0 0; 2 0 0];
+figure;
+plot(array1(:,1),(zeros(1,5)),'-o');
+% antenna array
+increment= 360/5;
+el_angles=[0,0+increment,0+2*increment,0+3*increment,0+4*increment];
+R= 0.5/sind(increment/2);
+rx= R*cosd(el_angles);
+ry= R*sind(el_angles);
+rz= R*zeros(size(rx));
+array=[rx' ry' rz'];
+figure;
+plot(rx,ry,'.','MarkerSize',30,'DisplayName','5-element UCA' );
+legend('show');
 

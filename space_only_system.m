@@ -69,5 +69,5 @@ correlations= corrcoef(amai(1:end));
 %% nfr computation
 Sdd= computeManifoldRx(DOAs(1,:)',0,r,Fc,Fjvec(1),lightvel);
 Rdd= Sdd * Sdd';
-SNIRout= (space_weights'* Rdd * space_weights)/(space_weights'*(Rxx-Rdd)*space_weights)
+SNIRout= (space_weights'* Rdd * space_weights)/(space_weights'*(Rxx-Rdd)*space_weights);
 

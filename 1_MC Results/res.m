@@ -19,6 +19,7 @@
 array1=load("rmse.mat");
 array2=load("newest.mat");
 array3=load("greatestall.mat");
+array4=load("ressfinal.mat");
 
 array1=cell2mat(struct2cell(array1));
 array2=cell2mat(struct2cell(array2));
@@ -35,13 +36,14 @@ xaxis= L*SNR;
 mean_rmse=mean(RMSEradvel(1:100,1:9));
 
 figure;
-loglog(xaxis(1:9),mean_rmse,'-o','DisplayName','Radial Velocity (m/s) RMSE');
+loglog(xaxis(1:9),mean_rmse,'-o','DisplayName','Radial Velocity (m/s) RMSE','LineWidth',2.5);
 % line(xaxis,RMSEradvel);
-xlabel('SNR x L'); ylabel('Parameter Estimation RMSE');
+xlabel('SNR x{\it L}'); ylabel('Parameter Estimation RMSE');
+title('RMSE Plot for Estimated Parameters');
 grid on;
 hold on;
-loglog(xaxis(1:9),ress,'-s','DisplayName','DOA RMSE');
-set(gca,'YLim',[10e-7 10e1],'YTick',10.^(-7:1));
+loglog(xaxis(1:9),ress,'-s','DisplayName','DOA RMSE','LineWidth',2.5);
+set(gca,'YLim',[10e-7 10e1],'YTick',10.^(-7:2));
 ax = gca; 
 ax.FontSize = 11; 
 % ylim([10e-6 10e1]);

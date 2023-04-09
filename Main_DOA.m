@@ -103,16 +103,17 @@ del_est=delays(1,:);
 vel_est=VDops(1,:);
 %[cost1d]=OneDCost(del_est,uk_est,Fjvec,r,Pn,J,c(:,1),Nsc,K);
 [cost1d]=experiment(del_est,vel_est, (1:360), Fjvec,r,Pn,J,c(:,1),Nsc,K);
+%% DOA Cost Function Plotting
 Colours = {'red','g','blue'};
 figure;
 for k=1:K
     txt = ['Multipath ',num2str(k) ];
-    plot(20*log10(cost1d(k,:)),'Color',Colours{k},'DisplayName',txt);
+    plot(20*log10(cost1d(k,:)),'Color',Colours{k},'DisplayName',txt,'LineWidth',2);
     hold on;
 end
 hold off;
-grid on;
-xlabel('DOA(degrees)'); ylabel('Equation NUM Amplitude(dB)'); title('DOA Estimation'); legend('show');
+grid on;grid minor;
+xlabel('DOA (degrees)'); ylabel('Equation NUM Amplitude (dB)'); title('DOA Estimation'); legend('show');
 ax = gca; 
 ax.FontSize = 11; 
 DOAest= findMaxofPath(cost1d);
